@@ -115,6 +115,34 @@
 
     .filter-control { background: #f1f5f9 !important; border: 0 !important; border-radius: 12px !important; font-weight: 600; box-shadow: none !important; padding-top: .5rem; padding-bottom: .5rem; }
     .filter-item { flex: 1; min-width: 150px; }
+    .data-table td.num { text-align: center; }
+    .data-table td.total { text-align: center; font-weight: 800; color: #0f172a; background: #f8fafc; }
+    .map-link { color: #0369a1; text-decoration: none; }
+    .map-link:hover { text-decoration: underline; }
+
+    /* ── SOREK top-10 ── */
+    .seg-toggle .btn { font-weight: 600; font-size: .78rem; border-radius: 10px !important; padding: .4rem .8rem; }
+    .seg-toggle { gap: 4px; background: #f1f5f9; border-radius: 12px; padding: 3px; }
+    .seg-toggle .btn-check + .btn { border: 0; color: #475569; background: transparent; }
+    .seg-toggle .btn-check:checked + .btn { background: #fff; color: #0369a1; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+    .rank-list { list-style: none; margin: 0; padding: 0; }
+    .rank-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+    .rank-item:last-child { border-bottom: 0; }
+    .rank-no {
+      flex: 0 0 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-size: .75rem; font-weight: 800; background: #f1f5f9; color: #475569;
+    }
+    .rank-item:nth-child(-n+3) .rank-no { background: #125D72; color: #fff; }
+    .rank-body { flex: 1; min-width: 0; }
+    .rank-top { display: flex; align-items: baseline; gap: 6px; }
+    .rank-name { font-weight: 700; font-size: .82rem; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank-val { margin-left: auto; font-weight: 800; font-size: .82rem; color: #0f172a; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .rank-meta { font-size: .7rem; color: #64748b; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank-bar { height: 4px; background: #f1f5f9; border-radius: 4px; margin-top: 5px; overflow: hidden; }
+    .rank-bar > div { height: 100%; border-radius: 4px; }
+    .rank-prio { color: #d97706; font-size: .7rem; flex: 0 0 auto; }
+    .empty-state { text-align: center; color: #64748b; font-size: .82rem; padding: 32px 12px; }
+    .empty-state i { font-size: 1.6rem; color: #cbd5e1; display: block; margin-bottom: 10px; }
 
     /* ── Loading ── */
     #loading {
@@ -231,7 +259,7 @@
         <div class="col-xl-3 col-md-6">
           <div class="chart-card">
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <div><h6 class="fw-800 text-uppercase text-muted mb-0 eyebrow">Frekuensi Padam</h6><small class="text-primary fw-600">Tren Kejadian</small></div>
+              <div><h6 id="padam-title" class="fw-800 text-uppercase text-muted mb-0 eyebrow">Frekuensi Padam</h6><small id="padam-sub" class="text-primary fw-600">Kejadian per Bulan</small></div>
               <div class="icon-chip bg-primary bg-opacity-10"><i class="fas fa-chart-line text-primary"></i></div>
             </div>
             <div class="chart-box"><canvas id="chart-line"></canvas></div>
@@ -262,6 +290,61 @@
               <div class="icon-chip bg-success bg-opacity-10"><i class="fas fa-list-ul text-success"></i></div>
             </div>
             <div class="chart-scroll"><div id="bar-holder" style="position:relative;height:250px"><canvas id="chart-segmen"></canvas></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SOREK: pemakaian & pendapatan ── -->
+      <div class="card border-0 shadow-sm rounded-16 mb-3">
+        <div class="card-body p-3">
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            <div class="px-3 border-end d-none d-lg-block">
+              <span class="fw-800 text-muted text-uppercase eyebrow"><i class="fas fa-file-invoice-dollar text-primary me-2"></i>Data SOREK</span>
+            </div>
+            <div class="filter-item" style="max-width:220px">
+              <select id="f-sorek-bulan" class="form-select form-select-sm filter-control" aria-label="Bulan SOREK"><option value="">Memuat…</option></select>
+            </div>
+            <div class="d-flex seg-toggle" role="group" aria-label="Cakupan pelanggan">
+              <input type="radio" class="btn-check" name="sorek-scope" id="scope-all" value="all" checked>
+              <label class="btn btn-sm" for="scope-all">Semua pelanggan</label>
+              <input type="radio" class="btn-check" name="sorek-scope" id="scope-prio" value="prio">
+              <label class="btn btn-sm" for="scope-prio"><i class="fas fa-crown me-1"></i>Prioritas</label>
+            </div>
+            <small id="sorek-note" class="text-muted fw-600 ms-lg-auto"></small>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-xl-4 col-lg-6">
+          <div class="chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div><h6 class="fw-800 text-uppercase text-muted mb-0 eyebrow">10 Pelanggan kWh Tertinggi</h6><small id="kwh-sub" class="text-primary fw-600">Pemakaian kWh</small></div>
+              <div class="icon-chip bg-primary bg-opacity-10"><i class="fas fa-bolt text-primary"></i></div>
+            </div>
+            <ol id="top-kwh" class="rank-list"></ol>
+          </div>
+        </div>
+        <div class="col-xl-4 col-lg-6">
+          <div class="chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div><h6 class="fw-800 text-uppercase text-muted mb-0 eyebrow">10 Pelanggan RPPTL Tertinggi</h6><small id="rpptl-sub" class="text-success fw-600">Pendapatan RPPTL</small></div>
+              <div class="icon-chip bg-success bg-opacity-10"><i class="fas fa-sack-dollar text-success"></i></div>
+            </div>
+            <ol id="top-rpptl" class="rank-list"></ol>
+          </div>
+        </div>
+        <div class="col-xl-4 col-lg-12">
+          <div class="chart-card d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div><h6 class="fw-800 text-uppercase text-muted mb-0 eyebrow">10 Pelanggan Berpotensi Menunggak</h6><small class="text-danger fw-600">Berdasarkan history pelunasan</small></div>
+              <div class="icon-chip bg-danger bg-opacity-10"><i class="fas fa-triangle-exclamation text-danger"></i></div>
+            </div>
+            <div class="empty-state my-auto">
+              <i class="fas fa-hourglass-half"></i>
+              <div class="fw-800 text-dark mb-1">Data menyusul</div>
+              Daftar ini akan tampil setelah data history pelunasan tersedia.
+            </div>
           </div>
         </div>
       </div>
@@ -309,7 +392,7 @@
 
 <script>
 /* ═══════════════════ UTIL ═══════════════════ */
-const S = { cols: [], years: [], ulps: [], rows: [], view: [], charts: {}, loading: null, loaded: false };
+const S = { cols: [], padam: null, ulps: [], rows: [], view: [], sorek: null, sorekObjs: null, appliedUlp: '', charts: {}, loading: null, loaded: false };
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => Number(n || 0).toLocaleString('id-ID');
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -366,14 +449,8 @@ function setDataTime(ts, fromCache) {
 }
 
 function applyData(res, savedAt, fromCache) {
-  S.cols = res.columns || [];
-  S.years = (res.years || []).slice().sort();
-  S.ulps = res.ulps || [];
-  S.rows = res.data || [];
-  S.loaded = true;
   applyConfig(res.config);
-  setupFilters();
-  applyFilter(false);
+  ingest(res);
   setDataTime(savedAt, fromCache);
 }
 
@@ -443,8 +520,7 @@ function loadPrioritas() {
       if (!res || !res.success) throw new Error((res && res.error) || 'Gagal mengambil data');
       writeCache(res);
       applyData(res, Date.now(), false);
-      if (res.missing && res.missing.length) toast('warning', 'Kolom tidak ditemukan di sheet: ' + res.missing.join(', '), 7000);
-      else toast('success', `${fmt(S.rows.length)} data pelanggan dimuat`);
+      notifyLoaded(res);
     })
     .catch((err) => {
       const msg = String((err && err.message) || err);
@@ -453,6 +529,25 @@ function loadPrioritas() {
     })
     .finally(() => { S.loading = null; hideLoading(); if (icon) icon.classList.remove('fa-spin'); });
   return S.loading;
+}
+
+/** Simpan respons server ke state lalu gambar ulang dashboard. */
+function ingest(res) {
+  S.cols = res.columns || [];
+  S.padam = res.padam || null;
+  S.ulps = res.ulps || [];
+  S.rows = res.data || [];
+  S.sorek = res.sorek || null;
+  S.loaded = true;
+  setupFilters();
+  fillSorekMonths();
+  applyFilter(false);
+}
+
+function notifyLoaded(res) {
+  if (res.hint) toast('warning', 'Struktur sheet perlu diperbarui: ' + res.hint, 9000);
+  else if (res.missing && res.missing.length) toast('warning', 'Kolom tidak ditemukan di sheet: ' + res.missing.join(', '), 7000);
+  else toast('success', `${fmt(S.rows.length)} data pelanggan dimuat`);
 }
 
 /** ULP sesuai urutan di CONFIG, ditambah ULP lain yang muncul di data (jika ada salah ketik). */
@@ -494,6 +589,7 @@ function filteredRows() {
 
 function applyFilter(notify = true) {
   S.view = filteredRows();
+  S.appliedUlp = $('f-ulp').value;
   $('search-prioritas').value = '';
   $('kpi-ulp').textContent = fmt(countDistinct(S.view, 'ulp'));
   $('kpi-total').textContent = fmt(S.view.length);
@@ -501,6 +597,7 @@ function applyFilter(notify = true) {
   $('kpi-penyulang').textContent = fmt(countDistinct(S.view, 'supply_utama'));
   renderTable(S.view);
   renderCharts(S.view);
+  renderSorek();
   if (notify) toast('success', `${fmt(S.view.length)} data ditemukan`);
 }
 
@@ -513,7 +610,12 @@ function resetFilter() {
 /* ═══════════════════ TABLE ═══════════════════ */
 function cellHtml(key, v) {
   const val = esc(v);
-  if (/^kejadian_/.test(key)) return `<td class="text-center fw-bold text-primary">${val}</td>`;
+  if (/^padam_\d{2}$/.test(key)) return Number(v) ? `<td class="num fw-bold text-primary">${val}</td>` : `<td class="num text-muted">${val}</td>`;
+  if (key === 'padam_total') return `<td class="total">${val}</td>`;
+  if (key === 'koordinat' && String(v ?? '').trim()) {
+    const q = encodeURIComponent(String(v).trim());
+    return `<td><a class="map-link" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener" title="Buka di Google Maps"><i class="fas fa-location-dot me-1"></i>${val}</a></td>`;
+  }
   if (key === 'kondisi_genset' && val) {
     const bad = /RUSAK|TIDAK/i.test(v);
     return `<td><span class="badge rounded-pill px-3 py-1 ${bad ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'}">${val}</span></td>`;
@@ -600,25 +702,37 @@ function renderCharts(rows) {
   const tick = { size: 11, weight: '600' };
   const DL = window.ChartDataLabels ? [ChartDataLabels] : [];
 
-  // 1. Frekuensi padam per tahun (+ SAIFI di tooltip)
+  // 1. Frekuensi padam per bulan pada tahun rekap (+ SAIFI di tooltip)
   const valid = rows.filter((r) => String(r.nama_vip ?? '').trim());
   const nPlg = valid.length || 1;
-  const yearData = S.years.map((y) => valid.reduce((s, r) => s + (Number(r['kejadian_' + y]) || 0), 0));
+  const P = S.padam;
+  const now = new Date();
+  const lastMonth = !P ? 0 : P.year < now.getFullYear() ? 12 : P.year > now.getFullYear() ? 0 : now.getMonth() + 1;
+  const monthData = P ? P.keys.map((k, i) => (i < lastMonth ? valid.reduce((s, r) => s + (Number(r[k]) || 0), 0) : null)) : [];
+  const padamTotal = monthData.reduce((s, v) => s + (v || 0), 0);
+  $('padam-title').textContent = P ? `Frekuensi Padam ${P.year}` : 'Frekuensi Padam';
+  $('padam-sub').textContent = P ? `Kejadian per bulan · total ${fmt(padamTotal)}` : 'Perbarui Apps Script untuk data per bulan';
   S.charts.line = new Chart($('chart-line'), {
     type: 'line',
     plugins: DL,
     data: {
-      labels: S.years.map(String),
-      datasets: [{ label: 'Kejadian', data: yearData, borderColor: BLUE, backgroundColor: 'rgba(0,163,225,.12)', pointBackgroundColor: BLUE, fill: true, tension: 0.4, cubicInterpolationMode: 'monotone', pointRadius: 5 }],
+      labels: P ? P.months.map((m) => m.charAt(0) + m.slice(1).toLowerCase()) : [],
+      datasets: [{ label: 'Kejadian', data: monthData, borderColor: BLUE, backgroundColor: 'rgba(0,163,225,.12)', pointBackgroundColor: BLUE, fill: true, tension: 0.35, cubicInterpolationMode: 'monotone', pointRadius: 4, spanGaps: false }],
     },
     options: {
       responsive: true, maintainAspectRatio: false, layout: { padding: { top: 22 } },
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: (c) => [` Kejadian: ${fmt(c.parsed.y)}`, ` SAIFI: ${(c.parsed.y / nPlg).toFixed(4)}`] } },
-        datalabels: { anchor: 'end', align: 'top', color: '#334155', font: { weight: 'bold' }, formatter: (v) => fmt(v) },
+        tooltip: { callbacks: {
+          title: (items) => `${P.months[items[0].dataIndex]} ${P.year}`,
+          label: (c) => [` Kejadian: ${fmt(c.parsed.y)}`, ` SAIFI: ${(c.parsed.y / nPlg).toFixed(4)}`],
+        } },
+        datalabels: { display: (c) => !!c.dataset.data[c.dataIndex], anchor: 'end', align: 'top', color: '#334155', font: { size: 10, weight: 'bold' }, formatter: (v) => fmt(v) },
       },
-      scales: { y: { beginAtZero: true, grace: '10%', ticks: { font: tick, precision: 0 } }, x: { ticks: { font: tick }, grid: { display: false } } },
+      scales: {
+        y: { beginAtZero: true, grace: '15%', ticks: { font: tick, precision: 0 } },
+        x: { ticks: { font: { size: 10, weight: '600' }, maxRotation: 0, autoSkip: true, autoSkipPadding: 2 }, grid: { display: false } },
+      },
     },
   });
 
@@ -684,6 +798,92 @@ function renderCharts(rows) {
   });
 }
 
+/* ═══════════════════ SOREK ═══════════════════ */
+const NAMA_BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+const bulanLabel = (thbl) => `${NAMA_BULAN[Number(String(thbl).slice(4, 6)) - 1] || '?'} ${String(thbl).slice(0, 4)}`;
+const rupiah = (n) => 'Rp ' + Math.round(Number(n || 0)).toLocaleString('id-ID');
+const rupiahSingkat = (n) => {
+  const a = Math.abs(Number(n || 0));
+  if (a >= 1e9) return 'Rp ' + (n / 1e9).toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ' M';
+  if (a >= 1e6) return 'Rp ' + (n / 1e6).toLocaleString('id-ID', { maximumFractionDigits: 1 }) + ' jt';
+  return rupiah(n);
+};
+
+function sorekRows() {
+  const s = S.sorek;
+  if (!s || !Array.isArray(s.rows)) return [];
+  if (!S.sorekObjs || S.sorekObjs.src !== s) {
+    const f = s.fields || [];
+    S.sorekObjs = { src: s, list: s.rows.map((r) => { const o = {}; f.forEach((k, i) => { o[k] = r[i]; }); return o; }) };
+  }
+  return S.sorekObjs.list;
+}
+
+function fillSorekMonths() {
+  const el = $('f-sorek-bulan'), current = el.value;
+  const months = ((S.sorek && S.sorek.months) || []).slice().sort().reverse();
+  el.innerHTML = months.length
+    ? months.map((m) => `<option value="${esc(m)}">${esc(bulanLabel(m))}</option>`).join('')
+    : '<option value="">Belum ada data SOREK</option>';
+  el.disabled = !months.length;
+  if (months.includes(current)) el.value = current;
+}
+
+function rankHtml(list, key, fmtVal, color, prio) {
+  const max = (list[0] && list[0][key]) || 1;
+  return list.map((r, i) => `
+    <li class="rank-item">
+      <span class="rank-no">${i + 1}</span>
+      <div class="rank-body">
+        <div class="rank-top">
+          <span class="rank-name" title="${esc(r.nama)} · IDPEL ${esc(r.idpel)}">${esc(r.nama || r.idpel)}</span>
+          ${prio.has(r.idpel) ? '<i class="fas fa-crown rank-prio" title="Pelanggan prioritas"></i>' : ''}
+          <span class="rank-val" title="${esc(fmtVal.full(r[key]))}">${esc(fmtVal.short(r[key]))}</span>
+        </div>
+        <div class="rank-meta">${esc(r.ulp)} · ${esc(r.tarif)}/${esc(fmt(r.daya))} VA · ${esc(r.idpel)}</div>
+        <div class="rank-bar"><div style="width:${Math.max(2, (r[key] / max) * 100).toFixed(1)}%;background:${color}"></div></div>
+      </div>
+    </li>`).join('');
+}
+
+function renderSorek() {
+  const month = $('f-sorek-bulan').value;
+  const checked = document.querySelector('input[name="sorek-scope"]:checked');
+  const scope = checked ? checked.value : 'all';
+  const ulp = S.appliedUlp;
+  const all = sorekRows();
+  const prioAll = new Set(S.rows.map((r) => String(r.idpel ?? '').trim()).filter(Boolean));
+  const prioView = new Set(S.view.map((r) => String(r.idpel ?? '').trim()).filter(Boolean));
+
+  let rows = all.filter((r) => r.thbl === month && (!ulp || r.ulp === ulp));
+  if (scope === 'prio') rows = rows.filter((r) => prioView.has(r.idpel));
+
+  $('sorek-note').textContent = scope === 'prio'
+    ? 'Pelanggan prioritas · mengikuti semua filter di atas'
+    : (ulp ? `ULP ${ulp} · dari filter di atas` : 'Semua ULP · hanya filter ULP yang berlaku');
+  const sub = month ? `${bulanLabel(month)} · ${ulp ? 'ULP ' + ulp : 'semua ULP'}` : '';
+  $('kwh-sub').textContent = sub || 'Pemakaian kWh';
+  $('rpptl-sub').textContent = sub || 'Pendapatan RPPTL';
+
+  const empty = (msg) => `<li class="empty-state"><i class="fas fa-file-circle-question"></i>${esc(msg)}</li>`;
+  if (!all.length) {
+    const msg = (S.sorek && S.sorek.note) || 'Data SOREK belum tersedia.';
+    $('top-kwh').innerHTML = empty(msg);
+    $('top-rpptl').innerHTML = empty(msg);
+    return;
+  }
+  if (!rows.length) {
+    const msg = scope === 'prio' ? 'Tidak ada pelanggan prioritas di SOREK untuk pilihan ini.' : 'Tidak ada data SOREK untuk pilihan ini.';
+    $('top-kwh').innerHTML = empty(msg);
+    $('top-rpptl').innerHTML = empty(msg);
+    return;
+  }
+  const top = (k) => rows.slice().sort((a, b) => b[k] - a[k] || (a.idpel < b.idpel ? -1 : 1)).slice(0, 10);
+  const kwhFmt = { short: (v) => `${fmt(v)} kWh`, full: (v) => `${fmt(v)} kWh` };
+  $('top-kwh').innerHTML = rankHtml(top('kwh'), 'kwh', kwhFmt, BLUE, prioAll);
+  $('top-rpptl').innerHTML = rankHtml(top('rpptl'), 'rpptl', { short: rupiahSingkat, full: rupiah }, '#10B981', prioAll);
+}
+
 /* ═══════════════════ INIT ═══════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
   $('btn-sidebar').addEventListener('click', toggleSidebar);
@@ -696,6 +896,8 @@ document.addEventListener('DOMContentLoaded', () => {
   $('btn-reset').addEventListener('click', resetFilter);
   ['f-segmentasi', 'f-penyulang'].forEach((id) => $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') applyFilter(true); }));
   $('search-prioritas').addEventListener('input', searchPrioritas);
+  $('f-sorek-bulan').addEventListener('change', renderSorek);
+  document.querySelectorAll('input[name="sorek-scope"]').forEach((el) => el.addEventListener('change', renderSorek));
 
   window.addEventListener('online', updateNetStatus);
   window.addEventListener('offline', updateNetStatus);
