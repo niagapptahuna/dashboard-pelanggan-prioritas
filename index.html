@@ -133,6 +133,8 @@
       font-size: .75rem; font-weight: 800; background: #f1f5f9; color: #475569;
     }
     .rank-item:nth-child(-n+3) .rank-no { background: #125D72; color: #fff; }
+    #top-telat .rank-item .rank-no { background: #f1f5f9; color: #475569; }
+    #top-telat .rank-item .rank-no.top { background: #125D72; color: #fff; }
     .rank-body { flex: 1; min-width: 0; }
     .rank-top { display: flex; align-items: baseline; gap: 6px; }
     .rank-name { font-weight: 700; font-size: .82rem; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -922,7 +924,7 @@ function renderMenunggak() {
     const rank = rows.findIndex((x) => x.kali === r.kali) + 1;   // peringkat sama untuk jumlah yang sama
     return `
     <li class="rank-item">
-      <span class="rank-no">${rank}</span>
+      <span class="rank-no${rank <= 3 ? ' top' : ''}">${rank}</span>
       <div class="rank-body">
         <div class="rank-top">
           <span class="rank-name" title="${esc(r.nama)} · IDPEL ${esc(r.idpel)}">${esc(r.nama || r.idpel)}</span>
