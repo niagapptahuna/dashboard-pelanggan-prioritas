@@ -335,16 +335,13 @@
           </div>
         </div>
         <div class="col-xl-4 col-lg-12">
-          <div class="chart-card d-flex flex-column">
+          <div class="chart-card">
             <div class="d-flex justify-content-between align-items-center mb-2">
-              <div><h6 class="fw-800 text-uppercase text-muted mb-0 eyebrow">10 Pelanggan Berpotensi Menunggak</h6><small class="text-danger fw-600">Berdasarkan history pelunasan</small></div>
-              <div class="icon-chip bg-danger bg-opacity-10"><i class="fas fa-triangle-exclamation text-danger"></i></div>
+              <div><h6 class="fw-800 text-uppercase text-muted mb-0 eyebrow">10 Pelanggan History Menunggak</h6><small id="telat-sub" class="text-danger fw-600">Pelunasan tanggal 21–31</small></div>
+              <div class="icon-chip bg-danger bg-opacity-10"><i class="fas fa-clock-rotate-left text-danger"></i></div>
             </div>
-            <div class="empty-state my-auto">
-              <i class="fas fa-hourglass-half"></i>
-              <div class="fw-800 text-dark mb-1">Data menyusul</div>
-              Daftar ini akan tampil setelah data history pelunasan tersedia.
-            </div>
+            <ol id="top-telat" class="rank-list"></ol>
+            <div id="telat-note" class="text-muted fw-600 mt-2" style="font-size:.7rem"></div>
           </div>
         </div>
       </div>
@@ -392,7 +389,7 @@
 
 <script>
 /* ═══════════════════ UTIL ═══════════════════ */
-const S = { cols: [], padam: null, ulps: [], rows: [], view: [], sorek: null, sorekObjs: null, appliedUlp: '', charts: {}, loading: null, loaded: false };
+const S = { cols: [], padam: null, ulps: [], rows: [], view: [], sorek: null, sorekObjs: null, menunggak: null, appliedUlp: '', charts: {}, loading: null, loaded: false };
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => Number(n || 0).toLocaleString('id-ID');
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -538,6 +535,7 @@ function ingest(res) {
   S.ulps = res.ulps || [];
   S.rows = res.data || [];
   S.sorek = res.sorek || null;
+  S.menunggak = res.menunggak || null;
   S.loaded = true;
   setupFilters();
   fillSorekMonths();
@@ -598,6 +596,7 @@ function applyFilter(notify = true) {
   renderTable(S.view);
   renderCharts(S.view);
   renderSorek();
+  renderMenunggak();
   if (notify) toast('success', `${fmt(S.view.length)} data ditemukan`);
 }
 
@@ -882,6 +881,61 @@ function renderSorek() {
   const kwhFmt = { short: (v) => `${fmt(v)} kWh`, full: (v) => `${fmt(v)} kWh` };
   $('top-kwh').innerHTML = rankHtml(top('kwh'), 'kwh', kwhFmt, BLUE, prioAll);
   $('top-rpptl').innerHTML = rankHtml(top('rpptl'), 'rpptl', { short: rupiahSingkat, full: rupiah }, '#10B981', prioAll);
+}
+
+/* ═══════════════════ HISTORY MENUNGGAK ═══════════════════ */
+const BLN_PENDEK = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+const tglLabel = (t, withYear = true) => (t ? `${Number(String(t).slice(6, 8))} ${BLN_PENDEK[Number(String(t).slice(4, 6)) - 1] || '?'}${withYear ? ' ' + String(t).slice(0, 4) : ''}` : '-');
+
+/** 10 pelanggan prioritas (sesuai filter) dengan pelunasan tgl 21–31 terbanyak. */
+function renderMenunggak() {
+  const M = S.menunggak;
+  const list = $('top-telat');
+  const note = $('telat-note');
+  const empty = (msg) => `<li class="empty-state"><i class="fas fa-file-circle-question"></i>${esc(msg)}</li>`;
+  note.textContent = '';
+  if (!M || !Array.isArray(M.rows)) {
+    $('telat-sub').textContent = 'Pelunasan tanggal 21–31';
+    list.innerHTML = empty('Perbarui Apps Script untuk data history pelunasan.');
+    return;
+  }
+  const mulai = M.mulaiTanggal || 21;
+  $('telat-sub').textContent = M.dari ? `Pelunasan tgl ${mulai}–31 · ${tglLabel(M.dari, M.dari.slice(0, 4) !== M.sampai.slice(0, 4))} – ${tglLabel(M.sampai)}` : `Pelunasan tanggal ${mulai}–31`;
+  if (!M.rows.length && M.note) { list.innerHTML = empty(M.note); return; }
+
+  const byId = {};
+  M.rows.forEach((r) => { byId[r[0]] = { kali: r[1], bulan: r[2], terakhir: r[3] }; });
+  const seen = {};
+  const rows = [];
+  S.view.forEach((p) => {
+    const id = String(p.idpel ?? '').trim();
+    if (!id || seen[id] || !byId[id]) return;
+    seen[id] = true;
+    rows.push(Object.assign({ idpel: id, nama: p.nama_vip, ulp: p.ulp }, byId[id]));
+  });
+  if (!rows.length) { list.innerHTML = empty('Tidak ada pelanggan prioritas dengan pelunasan tanggal 21–31 untuk filter ini.'); return; }
+
+  rows.sort((a, b) => b.kali - a.kali || b.bulan - a.bulan || (a.terakhir < b.terakhir ? 1 : a.terakhir > b.terakhir ? -1 : 0) || (a.idpel < b.idpel ? -1 : 1));
+  const top = rows.slice(0, 10);
+  const max = top[0].kali || 1;
+  list.innerHTML = top.map((r) => {
+    const rank = rows.findIndex((x) => x.kali === r.kali) + 1;   // peringkat sama untuk jumlah yang sama
+    return `
+    <li class="rank-item">
+      <span class="rank-no">${rank}</span>
+      <div class="rank-body">
+        <div class="rank-top">
+          <span class="rank-name" title="${esc(r.nama)} · IDPEL ${esc(r.idpel)}">${esc(r.nama || r.idpel)}</span>
+          <span class="rank-val" title="${esc(r.kali)} kali pelunasan pada tanggal ${mulai}–31">${esc(r.kali)}×</span>
+        </div>
+        <div class="rank-meta">${esc(r.ulp)} · ${esc(r.bulan)} bulan · terakhir ${esc(tglLabel(r.terakhir, false))} · ${esc(r.idpel)}</div>
+        <div class="rank-bar"><div style="width:${Math.max(2, (r.kali / max) * 100).toFixed(1)}%;background:#EF4444"></div></div>
+      </div>
+    </li>`;
+  }).join('');
+  const last = top[top.length - 1].kali;
+  const lebih = rows.slice(10).filter((x) => x.kali === last).length;
+  note.textContent = lebih ? `+${lebih} pelanggan lain juga ${last}× (peringkat sama, tidak ditampilkan).` : '';
 }
 
 /* ═══════════════════ INIT ═══════════════════ */
