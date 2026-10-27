@@ -1297,8 +1297,8 @@ function npsDrawCharts(v) {
       responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
       layout: { padding: { top: 16 } },
       plugins: {
-        legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, font: { size: 10, weight: '600' } } },
-        tooltip: { callbacks: {
+        legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, font: { size: 10, weight: '600' }, sort: (a, b) => a.datasetIndex - b.datasetIndex } },
+        tooltip: { itemSort: (a, b) => a.datasetIndex - b.datasetIndex, callbacks: {
           title: (it) => `${NAMA_BULAN[it[0].dataIndex]} ${year}`,
           label: (c) => ` ${c.dataset.label}: ${c.dataset.yAxisID === 'y1' ? npsPct(c.parsed.y) : npsNum(c.parsed.y, true)}`,
         } },
