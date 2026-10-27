@@ -146,6 +146,46 @@
     .empty-state { text-align: center; color: #64748b; font-size: .82rem; padding: 32px 12px; }
     .empty-state i { font-size: 1.6rem; color: #cbd5e1; display: block; margin-bottom: 10px; }
 
+    /* ── Sidebar: grup menu NPS ── */
+    #sidebar .menu .caret { width: auto; margin-left: auto; font-size: .65rem; opacity: .7; transition: transform .25s ease; }
+    #sidebar .menu li.open > a .caret { transform: rotate(180deg); }
+    #sidebar .menu a.group-active { color: #fff; font-weight: 600; }
+    #sidebar .submenu { list-style: none; padding: 0; margin: 0 0 4px; display: none; }
+    #sidebar li.open > .submenu { display: block; }
+    #sidebar .submenu a { padding: 9px 12px 9px 16px; margin: 2px 15px 2px 26px; font-size: .8rem; line-height: 1.3; }
+    #sidebar .submenu a:hover { padding-left: 19px; }
+    #sidebar .submenu a i { font-size: .8rem; }
+    #sidebar .sub-note { padding: 6px 15px 6px 50px; font-size: .75rem; color: #94a3b8; }
+    #sidebar .sub-retry { background: none; border: 0; padding: 0; color: var(--pln-gold); text-decoration: underline; font-size: .75rem; }
+
+    /* ── NPS ── */
+    .nps-kpi { cursor: pointer; }
+    .nps-kpi .kpi-label { font-size: .68rem; letter-spacing: .8px; line-height: 1.35; }
+    .nps-kpi .kpi-value { font-size: 1.6rem; margin-bottom: 6px; }
+    .nps-kpi .kpi-sub { font-size: .75rem; opacity: .9; }
+    .nps-section { scroll-margin-top: 95px; }
+    .nps-stat { background: #f8fafc; border-radius: 12px; padding: 10px 12px; height: 100%; }
+    .nps-stat .lbl { font-size: .64rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .5px; line-height: 1.3; }
+    .nps-stat .val { font-size: 1.05rem; font-weight: 800; color: #0f172a; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .nps-stat .val.good { color: #059669; }
+    .nps-stat .val.bad { color: #dc2626; }
+    .nps-pill { display: inline-block; font-size: .72rem; font-weight: 700; border-radius: 999px; padding: .2rem .65rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .nps-pill.good { background: #d1fae5; color: #047857; }
+    .nps-pill.bad { background: #fee2e2; color: #b91c1c; }
+    .nps-pill.na { background: #f1f5f9; color: #64748b; }
+    .nps-sub-title { font-size: .72rem; font-weight: 700; color: #64748b; margin-bottom: 6px; }
+    .nps-stale { color: #b45309; font-weight: 600; font-size: .75rem; margin-top: 2px; }
+    .nps-detail summary { cursor: pointer; font-size: .8rem; font-weight: 700; color: #0369a1; list-style: none; padding: 6px 0; }
+    .nps-detail summary::-webkit-details-marker { display: none; }
+    .nps-detail summary i { transition: transform .2s ease; }
+    .nps-detail[open] summary i { transform: rotate(90deg); }
+    .nps-table-wrap { overflow-x: auto; border: 1px solid #f1f5f9; border-radius: 12px; margin-top: 6px; }
+    .nps-table td, .nps-table th { text-align: right; }
+    .nps-table td:first-child, .nps-table th:first-child { text-align: left; position: sticky; left: 0; background: #fff; z-index: 1; }
+    .nps-table thead th:first-child { z-index: 3; }
+    .nps-table tr.total td { background: #f8fafc; font-weight: 800; }
+    .nps-table tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--pln-blue); }
+
     /* ── Loading ── */
     #loading {
       position: fixed; inset: 0; z-index: 2000; display: none; align-items: center; justify-content: center;
@@ -166,6 +206,10 @@
 
     <ul class="menu">
       <li><a data-page="prioritas"><i class="fas fa-crown"></i><span>Pelanggan Prioritas</span></a></li>
+      <li class="open">
+        <a data-group="nps"><i class="fas fa-chart-line"></i><span>NPS</span><i class="fas fa-chevron-down caret"></i></a>
+        <ul id="nps-submenu" class="submenu"><li class="sub-note">Memuat…</li></ul>
+      </li>
       <li><a data-page="updated"><i class="fas fa-clock-rotate-left"></i><span>Updated Soon</span></a></li>
     </ul>
 
@@ -371,6 +415,24 @@
       </div>
     </section>
 
+    <!-- ═════════ PAGE: NPS (satu sub-menu per sheet tahun berjalan) ═════════ -->
+    <section id="page-nps" class="page-content d-none">
+      <div class="card border-0 shadow-sm rounded-16 mb-4">
+        <div class="card-body p-3">
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            <div class="px-3 border-end d-none d-lg-block">
+              <span class="fw-800 text-muted text-uppercase eyebrow"><i class="fas fa-sliders text-primary me-2"></i>Tampilan</span>
+            </div>
+            <div class="filter-item"><select id="nps-bulan" class="form-select form-select-sm filter-control" aria-label="Posisi bulan"></select></div>
+            <div class="filter-item"><select id="nps-unit" class="form-select form-select-sm filter-control" aria-label="Unit"></select></div>
+            <div id="nps-source" class="ms-lg-auto px-2 small text-muted fw-600"></div>
+          </div>
+        </div>
+      </div>
+      <div id="nps-kpis" class="row g-3 g-lg-4 mb-4"></div>
+      <div id="nps-sections"></div>
+    </section>
+
     <!-- ═════════ PAGE: UPDATED SOON ═════════ -->
     <section id="page-updated" class="page-content d-none">
       <div class="data-card p-5 text-center">
@@ -391,7 +453,10 @@
 
 <script>
 /* ═══════════════════ UTIL ═══════════════════ */
-const S = { cols: [], padam: null, ulps: [], rows: [], view: [], sorek: null, sorekObjs: null, menunggak: null, appliedUlp: '', charts: {}, loading: null, loaded: false };
+const S = {
+  cols: [], padam: null, ulps: [], rows: [], view: [], sorek: null, sorekObjs: null, menunggak: null, appliedUlp: '', charts: {}, loading: null, loaded: false,
+  page: 'prioritas', nps: null, npsError: '', npsSheet: 0, npsSel: {}, npsCharts: {}, npsLoading: null,
+};
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => Number(n || 0).toLocaleString('id-ID');
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -405,11 +470,12 @@ const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = se
 // Link Web App Apps Script (berakhiran /exec). Ganti di sini jika link deployment berubah.
 const API_URL = 'https://script.google.com/macros/s/AKfycbxo5kWQMerMfXEfyOjIv91ezArqp4mG-AyqMspKbeZEPgjMA57FruPFnMy41eRvD96BdA/exec';
 const CACHE_KEY = 'dpp-cache-v1';
+const NPS_CACHE_KEY = 'dpp-nps-v1';
 
-async function fetchData() {
+async function fetchData(view) {
   let res;
   try {
-    res = await fetch(API_URL + '?format=json', { cache: 'no-store' });
+    res = await fetch(API_URL + '?format=json' + (view ? '&view=' + encodeURIComponent(view) : ''), { cache: 'no-store' });
   } catch (e) {
     throw new Error(navigator.onLine
       ? 'Gagal mengambil data dari Apps Script. Pastikan doGet() sudah diperbarui, di-deploy sebagai versi baru, dan akses "Anyone".'
@@ -421,11 +487,11 @@ async function fetchData() {
   catch (e) { throw new Error('Server tidak mengirim data JSON. Pastikan doGet() sudah diperbarui dan di-deploy sebagai versi baru.'); }
 }
 
-function readCache() {
-  try { return JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); } catch (e) { return null; }
+function readCache(key = CACHE_KEY) {
+  try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; }
 }
-function writeCache(res) {
-  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ savedAt: Date.now(), res })); } catch (e) { /* penyimpanan penuh / diblokir */ }
+function writeCache(res, key = CACHE_KEY) {
+  try { localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), res })); } catch (e) { /* penyimpanan penuh / diblokir */ }
 }
 
 function applyConfig(cfg) {
@@ -471,24 +537,44 @@ function toast(icon, text, timer = 3000) {
 }
 
 /* ═══════════════════ LAYOUT ═══════════════════ */
-const PAGE_TITLES = { prioritas: 'Pelanggan Prioritas', updated: 'Updated Soon' };
+const PAGE_TITLES = { prioritas: 'Pelanggan Prioritas', nps: 'NPS', updated: 'Updated Soon' };
 const isMobile = () => window.innerWidth < 992;
 
 function toggleSidebar() {
   document.body.classList.toggle(isMobile() ? 'sidebar-open' : 'sidebar-collapsed');
-  if (!isMobile()) setTimeout(() => Object.values(S.charts).forEach((c) => c && c.resize()), 320);
+  if (!isMobile()) setTimeout(() => Object.values(S.charts).concat(Object.values(S.npsCharts)).forEach((c) => c && c.resize()), 320);
 }
 
-function showPage(id) {
+function pageTitle(id) {
+  if (id !== 'nps') return PAGE_TITLES[id];
+  const sh = S.nps && S.nps.sheets[S.npsSheet];
+  return sh ? 'NPS · ' + npsTitle(sh.name) : 'NPS';
+}
+
+function markActiveMenu() {
+  document.querySelectorAll('#sidebar [data-page]').forEach((a) => a.classList.toggle('active-link',
+    a.dataset.page === S.page && (S.page !== 'nps' || Number(a.dataset.sheet) === S.npsSheet)));
+  const grp = document.querySelector('#sidebar [data-group="nps"]');
+  if (grp) grp.classList.toggle('group-active', S.page === 'nps');
+}
+
+function showPage(id, sub) {
+  S.page = id;
+  if (id === 'nps' && sub != null) S.npsSheet = sub;
   document.querySelectorAll('.page-content').forEach((p) => p.classList.toggle('d-none', p.id !== 'page-' + id));
-  document.querySelectorAll('#sidebar [data-page]').forEach((a) => a.classList.toggle('active-link', a.dataset.page === id));
-  $('page-title').textContent = PAGE_TITLES[id].toUpperCase();
+  markActiveMenu();
+  $('page-title').textContent = pageTitle(id).toUpperCase();
   const page = $('page-' + id);
   page.classList.remove('animate__animated', 'animate__fadeIn'); void page.offsetWidth; page.classList.add('animate__animated', 'animate__fadeIn');
   document.body.classList.remove('sidebar-open');
+  $('main').scrollTop = 0;
 
   if (id === 'prioritas') {
     if (S.loaded) renderCharts(S.view); else loadPrioritas();
+  }
+  if (id === 'nps') {
+    renderNps();
+    if (!S.nps) loadNps();
   }
 }
 
@@ -940,12 +1026,351 @@ function renderMenunggak() {
   note.textContent = lebih ? `+${lebih} pelanggan lain juga ${last}× (peringkat sama, tidak ditampilkan).` : '';
 }
 
+/* ═══════════════════ NPS ═══════════════════ */
+// Sumber: spreadsheet kinerja (lihat CONFIG.NPS_* di Code.gs). Setiap sheet tahun berjalan = satu sub-menu,
+// setiap bagian di sheet (judul + blok TARGET/REALISASI/PERSENTASI per unit) = satu kartu.
+const NPS_BLN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+const NPS_KPI_BG = ['bg-gradient-ulp', 'bg-gradient-plg', 'bg-gradient-seg', 'bg-gradient-blue'];
+const NPS_GOOD = '#10B981', NPS_BAD = '#EF4444', NPS_TARGET = '#F59E0B', NAVY = '#125D72';
+
+const npsKind = (m) => (/PERSENTASE|PERSENTASI|%/.test(m) ? 'pct' : /^(TARGET|BOBOT)/.test(m) ? 'target' : 'real');
+const npsStatus = (v) => (v == null ? 'na' : Math.round(v * 100) / 100 >= 100 ? 'good' : 'bad');   // sama dengan angka yang tampil (2 desimal)
+const npsPct = (v) => (v == null ? '–' : v.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%');
+function npsNum(v, full) {
+  if (v == null) return '–';
+  const a = Math.abs(v);
+  if (!full && a >= 1e9) return (v / 1e9).toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ' M';
+  if (!full && a >= 1e6) return (v / 1e6).toLocaleString('id-ID', { maximumFractionDigits: 1 }) + ' jt';
+  const dec = !Number.isInteger(v) && a < 100 ? 2 : 0;
+  return v.toLocaleString('id-ID', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+/** "PERCEPATAN CASH IN - 2026" → "Percepatan Cash In" (judul yang sudah huruf campuran dibiarkan). */
+function npsTitle(s) {
+  const t = String(s || '').replace(/\s*[-–—]\s*\d{4}\s*$/, '').trim();
+  if (t !== t.toUpperCase()) return t;
+  return t.toLowerCase().replace(/[a-z0-9]+/g, (w) => (/^(pln|up3|ulp|prr|aga|pp|nps|kwh)$/.test(w) ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1)));
+}
+const npsIcon = (name) => (/CASH/i.test(name) ? 'fa-money-bill-wave' : /MOBILE/i.test(name) ? 'fa-mobile-screen-button' : 'fa-file-lines');
+
+function loadNps() {
+  if (S.npsLoading) return S.npsLoading;
+  // Sub-menu & halaman NPS langsung tampil dari data tersimpan, lalu diperbarui dari Apps Script.
+  if (!S.nps) {
+    const cached = readCache(NPS_CACHE_KEY);
+    if (cached && cached.res && cached.res.success && Array.isArray(cached.res.sheets)) {
+      try { ingestNps(cached.res); } catch (e) { /* cache lama tidak terbaca */ }
+    }
+  }
+  S.npsLoading = fetchData('nps')
+    .then((res) => {
+      if (!res || !res.success) throw new Error((res && res.error) || 'Gagal mengambil data NPS');
+      ingestNps(res);
+      writeCache(res, NPS_CACHE_KEY);
+    })
+    .catch((err) => npsLoadFailed(String((err && err.message) || err)))
+    .finally(() => { S.npsLoading = null; });
+  return S.npsLoading;
+}
+
+function npsLoadFailed(msg) {
+  if (S.nps) { toast('warning', 'Data NPS gagal diperbarui, menampilkan data tersimpan. ' + msg, 7000); return; }
+  S.npsError = msg;
+  buildNpsMenu();
+  if (S.page === 'nps') renderNps();
+}
+
+/** Peran baris per bagian: target utama, realisasi utama (baris terakhir sebelum PERSENTASI), persen. */
+function npsPrepare(res) {
+  const now = new Date();
+  res.sheets.forEach((sh) => {
+    sh.sections.forEach((s) => {
+      const pct = s.metrics.find((m) => npsKind(m) === 'pct') || null;
+      const before = pct ? s.metrics.slice(0, s.metrics.indexOf(pct)) : s.metrics;
+      s.roles = {
+        pct,
+        target: s.metrics.find((m) => npsKind(m) === 'target') || null,
+        real: before.filter((m) => npsKind(m) === 'real').pop() || s.metrics.filter((m) => npsKind(m) === 'real').pop() || null,
+      };
+    });
+    // Bulan data terbaru: bagian yang realisasinya belum penuh setahun menentukan posisi bulan.
+    const last = sh.sections.map((s) => s.lastMonth).filter((v) => v != null);
+    const partial = last.filter((v) => v < 11);
+    sh.dataMonth = partial.length ? Math.max(...partial) : last.length ? Math.max(...last)
+      : res.year < now.getFullYear() ? 11 : res.year > now.getFullYear() ? 0 : now.getMonth();
+    const labels = {};
+    sh.sections.forEach((s) => s.units.forEach((u) => { if (!labels[u.key]) labels[u.key] = u; }));
+    const order = (k) => (labels[k].total ? -1 : (res.ulps || []).indexOf(k) >= 0 ? (res.ulps || []).indexOf(k) : 99);
+    sh.unitKeys = Object.keys(labels).sort((a, b) => order(a) - order(b));
+    sh.unitLabels = Object.fromEntries(Object.entries(labels).map(([k, u]) => [k, u.label]));
+  });
+}
+
+function ingestNps(res) {
+  if (!Array.isArray(res.sheets)) throw new Error('Perbarui Apps Script (deploy versi baru) untuk menampilkan menu NPS.');
+  npsPrepare(res);
+  S.nps = res;
+  S.npsError = '';
+  res.sheets.forEach((sh) => {
+    const sel = S.npsSel[sh.name];
+    if (sel && (sel.auto || sel.month > sh.dataMonth)) { sel.month = sh.dataMonth; sel.auto = true; }
+  });
+  if (S.npsSheet >= res.sheets.length) S.npsSheet = 0;
+  buildNpsMenu();
+  if (S.page === 'nps') renderNps();
+}
+
+function npsSel(sh) {
+  sh = sh || (S.nps && S.nps.sheets[S.npsSheet]);
+  if (!sh) return {};
+  return S.npsSel[sh.name] || (S.npsSel[sh.name] = { month: sh.dataMonth, unit: 'UP3', auto: true });
+}
+
+function buildNpsMenu() {
+  const ul = $('nps-submenu');
+  if (!S.nps) {
+    ul.innerHTML = S.npsError
+      ? '<li class="sub-note">Gagal memuat. <button type="button" class="sub-retry" data-action="nps-retry">Coba lagi</button></li>'
+      : '<li class="sub-note">Memuat…</li>';
+    return;
+  }
+  ul.innerHTML = S.nps.sheets.length
+    ? S.nps.sheets.map((sh, i) => `<li><a data-page="nps" data-sheet="${i}" title="${esc(sh.name)}"><i class="fas ${npsIcon(sh.name)}"></i><span>${esc(npsTitle(sh.name))}</span></a></li>`).join('')
+    : `<li class="sub-note">Belum ada sheet ${esc(S.nps.year)}.</li>`;
+  markActiveMenu();
+}
+
+function npsDestroyCharts() {
+  Object.values(S.npsCharts).forEach((c) => c && c.destroy());
+  S.npsCharts = {};
+}
+
+function renderNpsState(html) {
+  npsDestroyCharts();
+  $('nps-kpis').innerHTML = '';
+  $('nps-source').textContent = '';
+  ['nps-bulan', 'nps-unit'].forEach((id) => { $(id).innerHTML = ''; $(id).disabled = true; });
+  $('nps-sections').innerHTML = `<div class="data-card p-5 text-center">${html}</div>`;
+}
+
+function renderNps() {
+  if (!S.nps) {
+    renderNpsState(S.npsError
+      ? `<div class="text-danger fw-bold mb-2"><i class="fas fa-triangle-exclamation me-2"></i>Data NPS gagal dimuat</div>
+         <div class="text-muted small mb-3">${esc(S.npsError)}</div>
+         <button class="btn btn-primary btn-sm rounded-12 px-4" type="button" onclick="loadNps()"><i class="fas fa-rotate me-2"></i>Coba lagi</button>`
+      : '<div class="spinner-border text-primary mb-3" role="status"></div><div class="fw-600 text-muted">Memuat data NPS…</div>');
+    return;
+  }
+  const sh = S.nps.sheets[S.npsSheet];
+  if (!sh) {
+    renderNpsState(`<div class="fw-bold text-dark mb-1">Belum ada sheet ${esc(S.nps.year)}</div><div class="text-muted small">Tambahkan sheet dengan "${esc(S.nps.year)}" di namanya pada spreadsheet NPS.</div>`);
+    return;
+  }
+  const sel = npsSel(sh);
+  if (!sh.unitKeys.includes(sel.unit)) sel.unit = sh.unitKeys[0];
+  const year = S.nps.year;
+
+  const mSel = $('nps-bulan');
+  mSel.disabled = false;
+  mSel.innerHTML = NAMA_BULAN.slice(0, sh.dataMonth + 1).map((n, i) => `<option value="${i}">Posisi ${n} ${year}</option>`).reverse().join('');
+  mSel.value = String(sel.month);
+  const uSel = $('nps-unit');
+  uSel.disabled = false;
+  uSel.innerHTML = sh.unitKeys.map((k) => `<option value="${esc(k)}">${esc(sh.unitLabels[k])}${k === 'UP3' ? ' (total)' : ''}</option>`).join('');
+  uSel.value = sel.unit;
+  $('nps-source').innerHTML = `<i class="fas fa-table me-1"></i>${esc(S.nps.source || 'Spreadsheet NPS')} · data s.d. ${esc(NAMA_BULAN[sh.dataMonth])} ${esc(year)}`;
+  $('page-title').textContent = pageTitle('nps').toUpperCase();
+
+  const views = sh.sections.map((s, i) => npsView(s, sel, i));
+  const xl = views.length <= 2 ? 6 : views.length === 3 ? 4 : 3;
+  $('nps-kpis').innerHTML = views.map((v) => npsKpiHtml(v, xl)).join('');
+  $('nps-sections').innerHTML = views.map(npsSectionHtml).join('');
+  npsDestroyCharts();
+  views.forEach(npsDrawCharts);
+}
+
+/** Nilai satu bagian untuk unit & bulan terpilih. Bagian yang realisasinya berhenti lebih awal memakai bulan terakhirnya. */
+function npsView(s, sel, i) {
+  const eff = s.lastMonth != null && s.lastMonth < sel.month ? s.lastMonth : sel.month;
+  const unit = s.units.find((u) => u.key === sel.unit) || s.units.find((u) => u.total) || s.units[0];
+  const get = (u, m, mo) => (u && m && u.data[m] && u.data[m][mo] != null ? u.data[m][mo] : null);
+  const r = s.roles;
+  return { i, s, unit, eff, month: sel.month, stale: eff < sel.month, get, target: get(unit, r.target, eff), real: get(unit, r.real, eff), pct: get(unit, r.pct, eff) };
+}
+
+function npsKpiHtml(v, xl) {
+  const r = v.s.roles;
+  const st = r.pct ? npsStatus(v.pct) : 'na';
+  const value = r.pct ? npsPct(v.pct) : npsNum(v.real);
+  const sub = v.stale ? `Data terakhir ${NAMA_BULAN[v.eff]}`
+    : r.target && r.real ? `${npsNum(v.real)} dari ${npsTitle(r.target).toLowerCase()} ${npsNum(v.target)}` : v.unit.label;
+  const icon = st === 'good' ? 'fa-circle-check' : st === 'bad' ? 'fa-triangle-exclamation' : 'fa-chart-simple';
+  return `<div class="col-12 col-sm-6 col-xl-${xl}">
+    <div class="kpi-card nps-kpi ${NPS_KPI_BG[v.i % NPS_KPI_BG.length]}" data-sec="${v.i}" role="button" tabindex="0" title="Lihat rincian ${esc(npsTitle(v.s.title))}">
+      <div class="d-flex justify-content-between align-items-start gap-2">
+        <div class="kpi-label">${esc(npsTitle(v.s.title))}</div>
+        <span class="kpi-icon"><i class="fas ${icon}"></i></span>
+      </div>
+      <div class="kpi-value">${esc(value)}</div>
+      <div class="kpi-sub">${esc(v.unit.label)} · ${esc(sub)}</div>
+    </div>
+  </div>`;
+}
+
+function npsSectionHtml(v) {
+  const r = v.s.roles, year = S.nps.year, bln = `${NAMA_BULAN[v.eff]} ${year}`;
+  const stat = (lbl, val, full, cls) => `<div class="col-4"><div class="nps-stat" title="${esc(full)}"><div class="lbl">${esc(lbl)}</div><div class="val ${cls || ''}">${esc(val)}</div></div></div>`;
+  const stats = [
+    r.target ? stat(npsTitle(r.target), npsNum(v.target), npsNum(v.target, true)) : '',
+    r.real ? stat(npsTitle(r.real), npsNum(v.real), npsNum(v.real, true)) : '',
+    r.pct ? stat('Pencapaian', npsPct(v.pct), npsPct(v.pct), npsStatus(v.pct)) : '',
+  ].join('');
+  const metric = r.pct || r.real;
+  const nUnits = v.s.units.length;
+  const head = '<th>Unit</th>' + v.s.metrics.map((m) => `<th>${esc(m)}</th>`).join('');
+  const body = v.s.units.map((u) => `<tr class="${u.total ? 'total' : ''}${u.key === v.unit.key ? ' sel' : ''}"><td>${esc(u.label)}</td>${v.s.metrics.map((m) => {
+    const x = v.get(u, m, v.eff);
+    return npsKind(m) === 'pct' ? `<td><span class="nps-pill ${npsStatus(x)}">${esc(npsPct(x))}</span></td>` : `<td>${esc(npsNum(x, true))}</td>`;
+  }).join('')}</tr>`).join('');
+  return `<div class="chart-card mb-4 nps-section" id="nps-sec-${v.i}">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+      <div>
+        <h6 class="fw-800 text-uppercase text-muted mb-0 eyebrow">${esc(npsTitle(v.s.title))}</h6>
+        <small class="fw-600 text-primary">${esc(v.unit.label)} · posisi ${esc(bln)}</small>
+        ${v.stale ? `<div class="nps-stale"><i class="fas fa-circle-info me-1"></i>Realisasi bagian ini di sheet baru terisi s.d. ${esc(bln)}, jadi yang ditampilkan posisi ${esc(NAMA_BULAN[v.eff])}, bukan ${esc(NAMA_BULAN[v.month])}.</div>` : ''}
+      </div>
+      ${r.pct ? `<span class="nps-pill ${npsStatus(v.pct)}">${esc(npsPct(v.pct))}</span>` : ''}
+    </div>
+    <div class="row g-2 mb-3">${stats}</div>
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <div class="nps-sub-title">Tren bulanan · ${esc(v.unit.label)}</div>
+        <div class="chart-box"><canvas id="nps-trend-${v.i}"></canvas></div>
+      </div>
+      <div class="col-lg-5">
+        <div class="nps-sub-title">${esc(metric ? npsTitle(r.pct ? 'Pencapaian' : metric) : '')} per unit · ${esc(bln)}</div>
+        <div class="chart-box" style="height:${Math.max(200, nUnits * 26 + 24)}px"><canvas id="nps-ulp-${v.i}"></canvas></div>
+      </div>
+    </div>
+    <details class="nps-detail mt-2">
+      <summary><i class="fas fa-chevron-right me-1"></i> Rincian per unit · ${esc(bln)}</summary>
+      <div class="nps-table-wrap"><table class="table data-table nps-table mb-0"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
+    </details>
+  </div>`;
+}
+
+/** Garis putus-putus 100% di grafik pencapaian per unit. */
+const npsRefLine = {
+  id: 'npsRef',
+  afterDatasetsDraw(chart) {
+    const x = chart.scales.x;
+    if (!x) return;
+    const px = x.getPixelForValue(100);
+    if (px < chart.chartArea.left || px > chart.chartArea.right) return;
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(15,23,42,.35)';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(px, chart.chartArea.top); ctx.lineTo(px, chart.chartArea.bottom); ctx.stroke();
+    ctx.restore();
+  },
+};
+
+function npsDrawCharts(v) {
+  if (typeof Chart === 'undefined') return;
+  Chart.defaults.font.family = "'Poppins', sans-serif";
+  Chart.defaults.color = '#64748b';
+  const DL = window.ChartDataLabels ? [ChartDataLabels] : [];
+  const r = v.s.roles, year = S.nps.year;
+  const series = (m, upto) => NPS_BLN.map((_, i) => (i <= upto ? v.get(v.unit, m, i) : null));
+
+  // 1. Tren: target (sepanjang tahun), realisasi & pencapaian (s.d. bulan terpilih)
+  const ds = [];
+  if (r.target) ds.push({ label: npsTitle(r.target), data: series(r.target, 11), borderColor: NPS_TARGET, backgroundColor: NPS_TARGET, borderDash: [6, 4], borderWidth: 2, pointRadius: 0, tension: 0.25, yAxisID: 'y', order: 2 });
+  if (r.real) ds.push({ label: npsTitle(r.real), data: series(r.real, v.eff), borderColor: BLUE, backgroundColor: 'rgba(0,163,225,.12)', fill: true, borderWidth: 2.5, pointRadius: 3, pointBackgroundColor: BLUE, tension: 0.3, yAxisID: 'y', order: 1 });
+  if (r.pct) ds.push({ label: 'Pencapaian (%)', data: series(r.pct, v.eff), borderColor: NPS_GOOD, backgroundColor: NPS_GOOD, borderWidth: 2, pointRadius: 3, tension: 0.3, yAxisID: 'y1', order: 0 });
+  S.npsCharts['t' + v.i] = new Chart($('nps-trend-' + v.i), {
+    type: 'line',
+    plugins: DL,
+    data: { labels: NPS_BLN, datasets: ds },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+      layout: { padding: { top: 16 } },
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, font: { size: 10, weight: '600' } } },
+        tooltip: { callbacks: {
+          title: (it) => `${NAMA_BULAN[it[0].dataIndex]} ${year}`,
+          label: (c) => ` ${c.dataset.label}: ${c.dataset.yAxisID === 'y1' ? npsPct(c.parsed.y) : npsNum(c.parsed.y, true)}`,
+        } },
+        datalabels: {
+          display: (c) => c.dataset.yAxisID === 'y1' && c.dataIndex === v.eff && c.dataset.data[c.dataIndex] != null,
+          align: 'top', anchor: 'end', color: '#047857', font: { size: 10, weight: 'bold' }, formatter: (x) => npsPct(x),
+        },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10, weight: '600' }, maxRotation: 0, autoSkip: true, autoSkipPadding: 2 } },
+        y: { beginAtZero: true, grace: '8%', ticks: { font: { size: 10 }, callback: (x) => npsNum(x) } },
+        y1: { display: !!r.pct, position: 'right', beginAtZero: true, grace: '12%', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, callback: (x) => x.toLocaleString('id-ID') + '%' } },
+      },
+    },
+  });
+
+  // 2. Per unit pada bulan terpilih: UP3 di atas, ULP diurutkan dari pencapaian tertinggi
+  const metric = r.pct || r.real;
+  if (!metric) return;
+  const units = v.s.units.slice().sort((a, b) => (b.total - a.total) || ((v.get(b, metric, v.eff) ?? -Infinity) - (v.get(a, metric, v.eff) ?? -Infinity)));
+  const vals = units.map((u) => v.get(u, metric, v.eff));
+  const max = Math.max(0, ...vals.filter((x) => x != null));
+  S.npsCharts['u' + v.i] = new Chart($('nps-ulp-' + v.i), {
+    type: 'bar',
+    plugins: r.pct ? [...DL, npsRefLine] : DL,
+    data: {
+      labels: units.map((u) => (u.total ? u.label : u.key)),
+      datasets: [{ data: vals, borderRadius: 5, maxBarThickness: 18,
+        backgroundColor: units.map((u, k) => (u.total ? NAVY : !r.pct ? BLUE : npsStatus(vals[k]) === 'good' ? NPS_GOOD : NPS_BAD)) }],
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false, layout: { padding: { right: 62 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { title: (it) => units[it[0].dataIndex].label, label: (c) => ' ' + (r.pct ? npsPct(c.parsed.x) : npsNum(c.parsed.x, true)) } },
+        datalabels: {
+          display: (c) => c.dataset.data[c.dataIndex] != null,
+          anchor: 'end', align: 'right', color: '#334155', font: { size: 10, weight: 'bold' },
+          formatter: (x) => (r.pct ? npsPct(x) : npsNum(x)),
+        },
+      },
+      scales: {
+        x: { display: false, beginAtZero: true, suggestedMax: r.pct ? Math.max(110, max) : undefined },
+        y: { grid: { display: false }, ticks: { font: { size: 10, weight: '700' } } },
+      },
+    },
+  });
+}
+
 /* ═══════════════════ INIT ═══════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
   $('btn-sidebar').addEventListener('click', toggleSidebar);
-  $('btn-refresh').addEventListener('click', () => loadPrioritas());
+  $('btn-refresh').addEventListener('click', () => { loadPrioritas(); loadNps(); });
   $('backdrop').addEventListener('click', () => document.body.classList.remove('sidebar-open'));
-  document.querySelectorAll('#sidebar [data-page]').forEach((a) => a.addEventListener('click', () => showPage(a.dataset.page)));
+  $('sidebar').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-group], [data-page], [data-action]');
+    if (!t) return;
+    if (t.dataset.group) t.parentElement.classList.toggle('open');
+    else if (t.dataset.action === 'nps-retry') loadNps();
+    else showPage(t.dataset.page, t.dataset.sheet != null ? Number(t.dataset.sheet) : undefined);
+  });
+
+  $('nps-bulan').addEventListener('change', () => { const s = npsSel(); s.month = Number($('nps-bulan').value); s.auto = false; renderNps(); });
+  $('nps-unit').addEventListener('change', () => { npsSel().unit = $('nps-unit').value; renderNps(); });
+  const goSection = (e) => {
+    const c = e.target.closest('[data-sec]');
+    if (!c || (e.type === 'keydown' && e.key !== 'Enter')) return;
+    const el = $('nps-sec-' + c.dataset.sec);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  $('nps-kpis').addEventListener('click', goSection);
+  $('nps-kpis').addEventListener('keydown', goSection);
 
   $('f-ulp').addEventListener('change', refreshPenyulang);
   $('btn-apply').addEventListener('click', () => applyFilter(true));
@@ -962,6 +1387,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(updateClock, 1000);
 
   showPage('prioritas');
+  loadNps();   // isi sub-menu NPS di latar belakang
 });
 </script>
 </body>
