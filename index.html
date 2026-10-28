@@ -1044,13 +1044,26 @@ function npsNum(v, full) {
   const dec = !Number.isInteger(v) && a < 100 ? 2 : 0;
   return v.toLocaleString('id-ID', { minimumFractionDigits: dec, maximumFractionDigits: dec });
 }
-/** "PERCEPATAN CASH IN - 2026" → "Percepatan Cash In" (judul yang sudah huruf campuran dibiarkan). */
+/**
+ * "PERCEPATAN CASH IN - 2026" → "Percepatan Cash In", "PENJUALAN GWH 2026 (1)" → "Penjualan GWh",
+ * "KINERJA PENJUALAN UP3 TAHUNA TAHUN 2026" → "Kinerja Penjualan". Judul yang sudah huruf campuran dibiarkan.
+ */
+const NPS_WORDS = { pln: 'PLN', up3: 'UP3', ulp: 'ULP', prr: 'PRR', aga: 'AGA', pp: 'PP', nps: 'NPS', gwh: 'GWh', kwh: 'kWh', mva: 'MVA' };
 function npsTitle(s) {
-  const t = String(s || '').replace(/\s*[-–—]\s*\d{4}\s*$/, '').trim();
+  const t = String(s || '')
+    .replace(/\s*\(\d+\)\s*$/, '')
+    .replace(/\s*[-–—]?\s*(TAHUN\s+)?\d{4}\s*$/i, '')
+    .replace(/\s+UP3\s+TAHUNA\s*$/i, '')
+    .trim();
   if (t !== t.toUpperCase()) return t;
-  return t.toLowerCase().replace(/[a-z0-9]+/g, (w) => (/^(pln|up3|ulp|prr|aga|pp|nps|kwh)$/.test(w) ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1)));
+  return t.toLowerCase().replace(/[a-z0-9]+/g, (w) => NPS_WORDS[w] || w.charAt(0).toUpperCase() + w.slice(1));
 }
-const npsIcon = (name) => (/CASH/i.test(name) ? 'fa-money-bill-wave' : /MOBILE/i.test(name) ? 'fa-mobile-screen-button' : 'fa-file-lines');
+function npsIcon(name) {
+  const n = String(name).toUpperCase();
+  return /CASH/.test(n) ? 'fa-money-bill-wave' : /MOBILE/.test(n) ? 'fa-mobile-screen-button'
+    : /PELANGGAN/.test(n) ? 'fa-user-plus' : /MVA/.test(n) ? 'fa-plug'
+    : /PENDAPATAN|PENYAMBUNGAN/.test(n) ? 'fa-coins' : /GWH|KWH|PENJUALAN/.test(n) ? 'fa-bolt' : 'fa-file-lines';
+}
 
 function loadNps() {
   if (S.npsLoading) return S.npsLoading;
@@ -1086,11 +1099,13 @@ function npsPrepare(res) {
     sh.sections.forEach((s) => {
       const pct = s.metrics.find((m) => npsKind(m) === 'pct') || null;
       const before = pct ? s.metrics.slice(0, s.metrics.indexOf(pct)) : s.metrics;
-      s.roles = {
-        pct,
-        target: s.metrics.find((m) => npsKind(m) === 'target') || null,
-        real: before.filter((m) => npsKind(m) === 'real').pop() || s.metrics.filter((m) => npsKind(m) === 'real').pop() || null,
-      };
+      const real = before.filter((m) => npsKind(m) === 'real').pop() || s.metrics.filter((m) => npsKind(m) === 'real').pop() || null;
+      // Target pasangan realisasi: yang paling banyak berbagi kata (KUMULATIF ↔ KUMULATIF, DELTA ↔ DELTA), selain itu yang pertama
+      const words = (m) => String(m).split(/[^A-Z0-9]+/).filter((w) => w && !/^(TARGET|REALISASI|BOBOT)$/.test(w));
+      const targets = s.metrics.filter((m) => npsKind(m) === 'target');
+      let target = targets[0] || null, best = 0;
+      if (real) targets.forEach((t) => { const n = words(t).filter((w) => words(real).includes(w)).length; if (n > best) { best = n; target = t; } });
+      s.roles = { pct, target, real };
     });
     // Bulan data terbaru: bagian yang realisasinya belum penuh setahun menentukan posisi bulan.
     const last = sh.sections.map((s) => s.lastMonth).filter((v) => v != null);
@@ -1110,6 +1125,7 @@ function ingestNps(res) {
   npsPrepare(res);
   S.nps = res;
   S.npsError = '';
+  if (res.errors && res.errors.length) toast('warning', 'Sebagian spreadsheet NPS gagal dibaca. ' + res.errors.join(' '), 8000);
   res.sheets.forEach((sh) => {
     const sel = S.npsSel[sh.name];
     if (sel && (sel.auto || sel.month > sh.dataMonth)) { sel.month = sh.dataMonth; sel.auto = true; }
@@ -1178,12 +1194,14 @@ function renderNps() {
   uSel.disabled = false;
   uSel.innerHTML = sh.unitKeys.map((k) => `<option value="${esc(k)}">${esc(sh.unitLabels[k])}${k === 'UP3' ? ' (total)' : ''}</option>`).join('');
   uSel.value = sel.unit;
-  $('nps-source').innerHTML = `<i class="fas fa-table me-1"></i>${esc(S.nps.source || 'Spreadsheet NPS')} · data s.d. ${esc(NAMA_BULAN[sh.dataMonth])} ${esc(year)}`;
+  $('nps-source').innerHTML = `<i class="fas fa-table me-1"></i>${esc(sh.source || S.nps.source || 'Spreadsheet NPS')} · data s.d. ${esc(NAMA_BULAN[sh.dataMonth])} ${esc(year)}`;
   $('page-title').textContent = pageTitle('nps').toUpperCase();
 
   const views = sh.sections.map((s, i) => npsView(s, sel, i));
   const xl = views.length <= 2 ? 6 : views.length === 3 ? 4 : 3;
-  $('nps-kpis').innerHTML = views.map((v) => npsKpiHtml(v, xl)).join('');
+  // Sheet dengan satu bagian: kartu ringkasan tidak perlu (angkanya sudah ada di kartu bagian)
+  $('nps-kpis').innerHTML = views.length > 1 ? views.map((v) => npsKpiHtml(v, xl)).join('') : '';
+  $('nps-kpis').classList.toggle('d-none', views.length <= 1);
   $('nps-sections').innerHTML = views.map(npsSectionHtml).join('');
   npsDestroyCharts();
   views.forEach(npsDrawCharts);
