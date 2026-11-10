@@ -913,7 +913,8 @@ function fillSorekMonths() {
     ? months.map((m) => `<option value="${esc(m)}">${esc(bulanLabel(m))}</option>`).join('')
     : '<option value="">Belum ada data SOREK</option>';
   el.disabled = !months.length;
-  if (months.includes(current)) el.value = current;
+  // Ikuti bulan terbaru, kecuali pengguna sudah memilih bulan lain sendiri
+  if (el.dataset.dipilih === '1' && months.includes(current)) el.value = current;
 }
 
 function rankHtml(list, key, fmtVal, color, prio) {
@@ -1395,7 +1396,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('btn-reset').addEventListener('click', resetFilter);
   ['f-segmentasi', 'f-penyulang'].forEach((id) => $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') applyFilter(true); }));
   $('search-prioritas').addEventListener('input', searchPrioritas);
-  $('f-sorek-bulan').addEventListener('change', renderSorek);
+  $('f-sorek-bulan').addEventListener('change', (e) => { e.target.dataset.dipilih = '1'; renderSorek(); });
   document.querySelectorAll('input[name="sorek-scope"]').forEach((el) => el.addEventListener('change', renderSorek));
 
   window.addEventListener('online', updateNetStatus);
