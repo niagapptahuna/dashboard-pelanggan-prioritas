@@ -1062,7 +1062,8 @@ function npsTitle(s) {
 function npsIcon(name) {
   const n = String(name).toUpperCase();
   return /CASH/.test(n) ? 'fa-money-bill-wave' : /MOBILE/.test(n) ? 'fa-mobile-screen-button'
-    : /PELANGGAN/.test(n) ? 'fa-user-plus' : /MVA/.test(n) ? 'fa-plug'
+    : /LISDES/.test(n) ? 'fa-house-chimney' : /MVA|PENYAMBUNGAN/.test(n) ? 'fa-plug'
+    : /PELANGGAN/.test(n) ? 'fa-user-plus'
     : /PENDAPATAN|PENYAMBUNGAN/.test(n) ? 'fa-coins' : /GWH|KWH|PENJUALAN/.test(n) ? 'fa-bolt' : 'fa-file-lines';
 }
 
