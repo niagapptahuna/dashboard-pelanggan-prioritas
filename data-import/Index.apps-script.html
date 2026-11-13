@@ -254,9 +254,6 @@
     .dt-table tfoot th, .dt-table tfoot td { position: sticky; bottom: 0; border-top: 2px solid #125D72; font-weight: 800; height: 40px; }
     .dt-table tfoot th { z-index: 2; background: #e6f2f5; color: #125D72; }
     .dt-table tfoot td.dt-0, .dt-table tfoot td.dt-sum { background: #e6f2f5; }
-    .dt-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 12px; font-size: .72rem; font-weight: 600; color: #475569; }
-    .dt-legend span { display: inline-flex; align-items: center; gap: 6px; }
-    .dt-legend i { width: 14px; height: 14px; border-radius: 4px; background: var(--dt-bg); }
     .dt-note { font-size: .72rem; font-weight: 600; color: #64748b; margin-top: 8px; }
 
     /* Kalender: satu baris per minggu (Senin s.d. Minggu), lingkaran makin besar makin banyak */
@@ -277,6 +274,8 @@
     }
     .dt-bub.neg { background: #fff; color: #125D72; box-shadow: inset 0 0 0 2px #125D72; }
     .dt-dot { width: 6px; height: 6px; border-radius: 50%; background: #cbd5e1; margin: 11px 0; }
+    /* Hari setelah posisi data: lingkaran kosong, beda bentuk dari titik abu-abu "nol". */
+    .dt-dot.fut { background: transparent; box-shadow: inset 0 0 0 1px #94a3b8; }
     .dt-dn { font-size: .62rem; font-weight: 600; color: #64748b; line-height: 1; }
     @media (min-width: 992px) {
       .dt-bub { --min: 30px; --max: 58px; }
@@ -575,7 +574,7 @@
         <div class="chart-card mb-4">
           <div class="dt-cal-head">
             <div>
-              <h6 class="dt-title">Penyambungan harian</h6>
+              <h6 class="dt-title" id="dt-cal-title">Penyambungan harian</h6>
               <div class="dt-sub" id="dt-cal-sub"></div>
             </div>
             <div class="dt-filter">
@@ -1462,7 +1461,7 @@ function npsDrawCharts(v) {
 
 /* ═══════════════════ DAFTAR TUNGGU (GV_67) ═══════════════════ */
 // Data dari tab DAFTAR_TUNGGU lewat Apps Script. Bagian ini sama persis di index.html (GitHub) dan Index.html (Apps Script).
-const DT_CACHE_KEY = 'dpp-dt-v2';
+const DT_CACHE_KEY = 'dpp-dt-v3';
 // Status yang masuk rekap daftar tunggu (id = akhiran id checkbox di halaman); PEREMAJAAN masuk kalender.
 const DT_STATUS = [
   { key: 'BAYAR', id: 'bayar', name: 'Bayar' },
@@ -1478,6 +1477,7 @@ const DT_JENIS = [
 const DT_HARI = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 const DT_HARI_PANJANG = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 const DT_BLN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+const DT_BLN_PANJANG = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 const DT = { res: null, rows: [], ulps: [], error: '', loading: null, st: { 'BAYAR': true, 'CETAK PK': true, 'PDL AWAL': true }, tmp: '', metric: 'pb', ulp: '', closed: {} };
 
 const dtFetch = () => (typeof fetchData === 'function' ? fetchData('daftar-tunggu') : gas('getDaftarTungguData'));
@@ -1520,13 +1520,13 @@ function dtCols(rows, k) {
 }
 
 function ingestDt(res) {
-  if (!Array.isArray(res.rows) || !Array.isArray(res.fields) || !res.fields.includes('status') || !Array.isArray(res.statuses)) {
+  if (!Array.isArray(res.rows) || !Array.isArray(res.fields) || !res.fields.includes('status') || !res.fields.includes('tgl') || !Array.isArray(res.statuses)) {
     throw new Error('Perbarui Apps Script (deploy versi baru) untuk menampilkan Daftar Tunggu.');
   }
   const f = Object.fromEntries(res.fields.map((k, i) => [k, i]));
   DT.rows = res.rows.map((r) => ({
     ulp: String(r[f.ulp]), jenis: r[f.jenis], status: String(res.statuses[r[f.status]] || ''), durasi: Number(r[f.durasi]) || 0,
-    tmp: Number(r[f.tmp]) || 0, tmpLabel: String(r[f.tmpLabel] || ''), nyala: String(r[f.nyala] || ''), tambah: Number(r[f.tambahDaya]) || 0,
+    tmp: Number(r[f.tmp]) || 0, tmpLabel: String(r[f.tmpLabel] || ''), tgl: String(r[f.tgl] || ''), tambah: Number(r[f.tambahDaya]) || 0,
   }));
   const known = res.ulps || [];
   DT.ulps = known.concat([...new Set(DT.rows.map((r) => r.ulp))].filter((u) => !known.includes(u)));
@@ -1686,22 +1686,6 @@ function dtRenderRekap() {
   const statusText = dipilih.length ? 'Status ' + dipilih.join(', ').replace(/, ([^,]*)$/, ' dan $1') : 'Belum ada status yang dipilih';
   const sub = `${statusText}, posisi ${dtPosisi()} · ${tmpText}`;
 
-  // Legenda warna dari batas TMP terpilih
-  let legend = '';
-  if (k) {
-    const span = {};
-    for (let d = 0; d <= k; d++) { const lv = dtLevel(d, k); (span[lv] = span[lv] || []).push(d); }
-    legend = '<div class="dt-legend"><span>Warna menurut durasi hari kerja dibanding batas TMP:</span>' + Object.keys(span).map((lv) => {
-      const ds = span[lv];
-      const txt = (ds.length > 1 ? `${ds[0]}-${ds[ds.length - 1]}` : ds[0]) + ' hari' + (ds.includes(k) ? ' (batas)' : '');
-      return `<span><i class="${dtLevelClass(Number(lv))}" aria-hidden="true"></i>${txt}</span>`;
-    }).join('') + `<span><i class="dt-lx" aria-hidden="true"></i>${k + 1} hari ke atas (lewat TMP)</span></div>`;
-  }
-  const sk = DT.res.skipped || {};
-  const skip = Object.entries(sk.status || {}).sort((a, b) => b[1] - a[1]).map(([s, n]) => `${dtFmt(n)} ${s}`)
-    .concat(sk.tanpaDurasi ? [`${dtFmt(sk.tanpaDurasi)} tanpa durasi hari kerja`] : [])
-    .concat(sk.jenisLain ? [`${dtFmt(sk.jenisLain)} jenis transaksi lain`] : []);
-
   $('dt-rekap').innerHTML = `
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
       <div>
@@ -1717,27 +1701,27 @@ function dtRenderRekap() {
         <caption class="visually-hidden">Jumlah pelanggan per unit dan jenis transaksi menurut durasi hari kerja, ${esc(tmpText)}</caption>
         ${head}${groups}${foot}
       </table>
-    </div>
-    ${legend}
-    <div class="dt-note">Migrasi: ${esc(DT_JENIS[2].note)}. Perubahan Daya di atas tidak termasuk migrasi.</div>
-    ${skip.length ? `<div class="dt-note">Tidak dihitung: ${esc(skip.join(', '))}.</div>` : ''}`;
+    </div>`;
 }
 
 function dtRenderCal() {
   const pb = DT.metric === 'pb';
-  const nyala = DT.rows.filter((r) => r.status === DT_SELESAI && r.nyala);
-  if (!nyala.length) {
+  // Bulan berjalan = bulan posisi data GV_67 (dari Apps Script: bulan); hanya PEREMAJAAN per TGLPEREMAJAAN.
+  const bulan = (DT.res && (DT.res.bulan || String(DT.res.posisi || '').slice(0, 7))) || '';
+  const bulanText = bulan ? `${DT_BLN_PANJANG[Number(bulan.slice(5, 7)) - 1]} ${bulan.slice(0, 4)}` : '';
+  $('dt-cal-title').textContent = bulanText ? `Penyambungan harian, ${bulanText}` : 'Penyambungan harian';
+  if (!bulan) {
     $('dt-cal-sub').textContent = '';
-    $('dt-cal').innerHTML = '<div class="empty-state">Belum ada permohonan berstatus PEREMAJAAN di data GV_67 ini.</div>';
+    $('dt-cal').innerHTML = '<div class="empty-state">Posisi data GV_67 belum terbaca, jadi bulan berjalan belum bisa ditentukan.</div>';
     return;
   }
-  const dates = nyala.map((r) => r.nyala).sort();
-  const pos = ((DT.res && DT.res.posisi) || '').slice(0, 10);
-  const start = dtDate(dates[0]);
-  const end = dtDate(pos > dates[dates.length - 1] ? pos : dates[dates.length - 1]);
+  const start = dtDate(bulan + '-01');
+  const end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 0));
+  const pos = String(DT.res.posisi || '').slice(0, 10);
+  const lewat = (d) => !pos || dtIso(d) <= pos;
   const val = {};
-  nyala.filter((r) => (!DT.ulp || r.ulp === DT.ulp) && (pb ? r.jenis === 'PB' : r.jenis !== 'PB'))
-    .forEach((r) => { val[r.nyala] = (val[r.nyala] || 0) + (pb ? 1 : r.tambah); });
+  DT.rows.filter((r) => r.status === DT_SELESAI && r.tgl.slice(0, 7) === bulan && (!DT.ulp || r.ulp === DT.ulp) && (pb ? r.jenis === 'PB' : r.jenis !== 'PB'))
+    .forEach((r) => { val[r.tgl] = (val[r.tgl] || 0) + (pb ? 1 : r.tambah); });
   const vals = Object.values(val);
   const maxAbs = Math.max(1, ...vals.map(Math.abs));
   const show = (v) => (pb ? dtFmt(v) : (v > 0 ? '+' : '') + dtKva(v));
@@ -1745,22 +1729,27 @@ function dtRenderCal() {
   const total = vals.reduce((s, v) => s + v, 0);
   const topDay = Object.keys(val).sort((a, b) => val[b] - val[a] || a.localeCompare(b))[0];
   const unitName = DT.ulp ? dtNama(DT.ulp) : 'UP3 Tahuna';
-  $('dt-cal-sub').textContent = `${pb ? 'Pasang Baru' : 'Penambahan daya dari Perubahan Daya dan Migrasi (DAYA − DAYA_LAMA)'} berstatus PEREMAJAAN, per tanggal nyala, ${unitName}, `
-    + `${dtTgl(start, true)} s.d. ${dtTgl(end, true)}: ${show(total)} ${unit}`
+  const sampai = pos && pos.slice(0, 7) === bulan && dtDate(pos) < end ? ` s.d. ${dtTgl(dtDate(pos))}` : '';
+  $('dt-cal-sub').textContent = `${pb ? 'Pasang Baru' : 'Penambahan daya dari Perubahan Daya dan Migrasi (DAYA − DAYA_LAMA)'} berstatus PEREMAJAAN, per tanggal peremajaan, ${unitName}, `
+    + `${bulanText}${sampai}: ${show(total)} ${unit}`
     + (topDay && val[topDay] > 0 ? `. Tertinggi ${show(val[topDay])} ${unit} pada ${DT_HARI_PANJANG[dtDow(dtDate(topDay))]}, ${dtTgl(dtDate(topDay), true)}.` : '.');
 
   const first = new Date(start); first.setUTCDate(first.getUTCDate() - dtDow(first));
-  const last = new Date(end); last.setUTCDate(last.getUTCDate() - dtDow(last));
   let body = '';
-  for (const w = new Date(last); w >= first; w.setUTCDate(w.getUTCDate() - 7)) {
+  for (const w = new Date(first); w <= end; w.setUTCDate(w.getUTCDate() + 7)) {
     const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(w); d.setUTCDate(d.getUTCDate() + i); return d; });
     const inside = (d) => d >= start && d <= end;
-    const sum = days.filter(inside).reduce((s, d) => s + (val[dtIso(d)] || 0), 0);
-    const a = days[0], b = days[6];
-    const range = a.getUTCMonth() === b.getUTCMonth() ? `${a.getUTCDate()}-${b.getUTCDate()} ${DT_BLN[b.getUTCMonth()]}` : `${dtTgl(a)} - ${dtTgl(b)}`;
-    body += `<tbody><tr class="dt-wk"><th colspan="7" scope="rowgroup"><div class="dt-wk-row"><span>${range}</span><b>${show(sum)} ${unit}</b></div></th></tr><tr>`
+    const ins = days.filter(inside);
+    const sum = ins.reduce((s, d) => s + (val[dtIso(d)] || 0), 0);
+    const a = ins[0].getUTCDate(), b = ins[ins.length - 1].getUTCDate();
+    const range = `${a === b ? a : `${a}-${b}`} ${DT_BLN[start.getUTCMonth()]}`;
+    body += `<tbody><tr class="dt-wk"><th colspan="7" scope="rowgroup"><div class="dt-wk-row"><span>${range}</span><b>${ins.some(lewat) ? `${show(sum)} ${unit}` : ''}</b></div></th></tr><tr>`
       + days.map((d) => {
         if (!inside(d)) return '<td></td>';
+        if (!lewat(d)) {
+          const lblF = `${DT_HARI_PANJANG[dtDow(d)]}, ${dtTgl(d, true)}: belum ada data`;
+          return `<td title="${esc(lblF)}"><div class="dt-day"><span class="dt-dot fut" aria-hidden="true"></span><span class="dt-dn" aria-hidden="true">${d.getUTCDate()}</span><span class="visually-hidden">${esc(lblF)}</span></div></td>`;
+        }
         const v = val[dtIso(d)] || 0;
         const what = pb ? `${dtFmt(v)} pasang baru` : v ? `${v > 0 ? 'tambah' : 'turun'} ${dtKva(Math.abs(v))} kVA` : 'tidak ada perubahan daya';
         const lbl = `${DT_HARI_PANJANG[dtDow(d)]}, ${dtTgl(d, true)}: ${what}`;
