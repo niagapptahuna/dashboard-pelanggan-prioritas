@@ -197,7 +197,19 @@
     .dt-field { display: flex; flex-direction: column; gap: 3px; min-width: 170px; }
     .dt-field label, .dt-field .dt-lbl { font-size: .7rem; font-weight: 700; color: #475569; }
     .dt-field .filter-control { min-height: 44px; }
-    .dt-field .seg-toggle .btn { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
+    .dt-field .seg-toggle .btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
+    #page-daftar-tunggu .seg-toggle .btn, #page-daftar-tunggu select:not(:disabled) { cursor: pointer; }
+    #page-daftar-tunggu .btn-check:disabled + .btn, #page-daftar-tunggu select:disabled { cursor: not-allowed; }
+    .dt-field .seg-toggle .btn-check:not(:checked):not(:disabled) + .btn:hover { background: #e6f2f5; color: #125D72; }
+    .dt-field .seg-toggle .btn-check:checked:not(:disabled) + .btn:hover { background: #f0f7f9; }
+    .dt-field .seg-toggle .btn-check:not(:disabled) + .btn:active { background: #d3e8ee; }
+    .dt-field .seg-toggle .btn-check:focus-visible + .btn { outline: 3px solid #125D72; outline-offset: 1px; }
+    .dt-field .filter-control:hover:not(:disabled) { background-color: #e6f2f5 !important; }
+    /* Status permohonan bisa dipilih lebih dari satu: kotak centang menandai pilihan, bukan warna saja. */
+    .dt-multi .btn { gap: 6px; }
+    .dt-multi .btn .on, .dt-multi .btn-check:checked + .btn .off { display: none; }
+    .dt-multi .btn-check:checked + .btn .on { display: inline-block; }
+    .dt-btn { min-height: 44px; }
     .dt-source { margin-left: auto; font-size: .75rem; font-weight: 600; color: #64748b; text-align: right; }
     .dt-title { font-size: 1rem; font-weight: 800; color: #0f172a; margin: 0; }
     .dt-sub { font-size: .76rem; font-weight: 600; color: #475569; margin-top: 2px; }
@@ -274,6 +286,9 @@
       .dt-field { min-width: 0; flex: 1 1 100%; }
       .dt-field .seg-toggle { display: flex; }
       .dt-field .seg-toggle .btn { flex: 1 1 0; padding-left: .4rem; padding-right: .4rem; }
+      /* Tiga status di layar sempit: jumlah pindah ke baris kedua supaya tetap di dalam kartu. */
+      .dt-multi .btn { flex-wrap: wrap; white-space: normal; row-gap: 0; line-height: 1.2; padding-top: .3rem; padding-bottom: .3rem; }
+      .dt-multi .btn span { flex-basis: 100%; }
       .dt-source { margin-left: 0; text-align: left; flex-basis: 100%; }
       .dt-table thead th.dt-unit { width: 108px; min-width: 108px; }
       .dt-ulp th { padding-left: 14px !important; }
@@ -537,16 +552,14 @@
           <div class="dt-filter">
             <div class="dt-field">
               <span class="dt-lbl" id="dt-status-lbl">Status permohonan</span>
-              <div class="btn-group seg-toggle" role="radiogroup" aria-labelledby="dt-status-lbl">
-                <input type="radio" class="btn-check" name="dt-status" id="dt-status-tunggu" value="tunggu" checked>
-                <label class="btn" for="dt-status-tunggu">Masih menunggu <span id="dt-n-tunggu"></span></label>
-                <input type="radio" class="btn-check" name="dt-status" id="dt-status-selesai" value="selesai">
-                <label class="btn" for="dt-status-selesai">Sudah selesai <span id="dt-n-selesai"></span></label>
+              <div class="btn-group seg-toggle dt-multi" role="group" aria-labelledby="dt-status-lbl">
+                <input type="checkbox" class="btn-check" name="dt-status" id="dt-st-bayar" value="BAYAR" checked>
+                <label class="btn" for="dt-st-bayar"><i class="far fa-square off" aria-hidden="true"></i><i class="fas fa-square-check on" aria-hidden="true"></i>Bayar <span id="dt-n-bayar"></span></label>
+                <input type="checkbox" class="btn-check" name="dt-status" id="dt-st-cetakpk" value="CETAK PK" checked>
+                <label class="btn" for="dt-st-cetakpk"><i class="far fa-square off" aria-hidden="true"></i><i class="fas fa-square-check on" aria-hidden="true"></i>Cetak PK <span id="dt-n-cetakpk"></span></label>
+                <input type="checkbox" class="btn-check" name="dt-status" id="dt-st-pdlawal" value="PDL AWAL" checked>
+                <label class="btn" for="dt-st-pdlawal"><i class="far fa-square off" aria-hidden="true"></i><i class="fas fa-square-check on" aria-hidden="true"></i>PDL Awal <span id="dt-n-pdlawal"></span></label>
               </div>
-            </div>
-            <div class="dt-field" id="dt-bulan-field" hidden>
-              <label for="dt-bulan">Bulan nyala</label>
-              <select id="dt-bulan" class="form-select form-select-sm filter-control"></select>
             </div>
             <div class="dt-field">
               <label for="dt-tmp">Kriteria TMP</label>
@@ -1449,7 +1462,14 @@ function npsDrawCharts(v) {
 
 /* ═══════════════════ DAFTAR TUNGGU (GV_67) ═══════════════════ */
 // Data dari tab DAFTAR_TUNGGU lewat Apps Script. Bagian ini sama persis di index.html (GitHub) dan Index.html (Apps Script).
-const DT_CACHE_KEY = 'dpp-dt-v1';
+const DT_CACHE_KEY = 'dpp-dt-v2';
+// Status yang masuk rekap daftar tunggu (id = akhiran id checkbox di halaman); PEREMAJAAN masuk kalender.
+const DT_STATUS = [
+  { key: 'BAYAR', id: 'bayar', name: 'Bayar' },
+  { key: 'CETAK PK', id: 'cetakpk', name: 'Cetak PK' },
+  { key: 'PDL AWAL', id: 'pdlawal', name: 'PDL Awal' },
+];
+const DT_SELESAI = 'PEREMAJAAN';
 const DT_JENIS = [
   { key: 'PB', name: 'Pasang Baru' },
   { key: 'PD', name: 'Perubahan Daya', note: 'tanpa migrasi' },
@@ -1458,8 +1478,7 @@ const DT_JENIS = [
 const DT_HARI = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 const DT_HARI_PANJANG = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 const DT_BLN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-const DT_BLN_PANJANG = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-const DT = { res: null, rows: [], ulps: [], error: '', loading: null, status: 'tunggu', bulan: null, tmp: '', metric: 'pb', ulp: '', closed: {} };
+const DT = { res: null, rows: [], ulps: [], error: '', loading: null, st: { 'BAYAR': true, 'CETAK PK': true, 'PDL AWAL': true }, tmp: '', metric: 'pb', ulp: '', closed: {} };
 
 const dtFetch = () => (typeof fetchData === 'function' ? fetchData('daftar-tunggu') : gas('getDaftarTungguData'));
 const dtNama = (u) => String(u).toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase());
@@ -1470,7 +1489,6 @@ const dtDate = (s) => { const [y, m, d] = String(s).slice(0, 10).split('-').map(
 const dtIso = (d) => d.toISOString().slice(0, 10);
 const dtDow = (d) => (d.getUTCDay() + 6) % 7;   // Senin = 0
 const dtTgl = (d, tahun) => `${d.getUTCDate()} ${DT_BLN[d.getUTCMonth()]}${tahun ? ' ' + d.getUTCFullYear() : ''}`;
-const dtBulanText = (ym) => `${DT_BLN_PANJANG[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
 const dtPosisi = () => {
   const p = (DT.res && DT.res.posisi) || '';
   return p ? dtTgl(dtDate(p), true) + (p.length > 10 ? ', ' + p.slice(11, 16) : '') : '';
@@ -1502,10 +1520,12 @@ function dtCols(rows, k) {
 }
 
 function ingestDt(res) {
-  if (!Array.isArray(res.rows) || !Array.isArray(res.fields)) throw new Error('Perbarui Apps Script (deploy versi baru) untuk menampilkan Daftar Tunggu.');
+  if (!Array.isArray(res.rows) || !Array.isArray(res.fields) || !res.fields.includes('status') || !Array.isArray(res.statuses)) {
+    throw new Error('Perbarui Apps Script (deploy versi baru) untuk menampilkan Daftar Tunggu.');
+  }
   const f = Object.fromEntries(res.fields.map((k, i) => [k, i]));
   DT.rows = res.rows.map((r) => ({
-    ulp: String(r[f.ulp]), jenis: r[f.jenis], selesai: !!r[f.selesai], durasi: Number(r[f.durasi]) || 0,
+    ulp: String(r[f.ulp]), jenis: r[f.jenis], status: String(res.statuses[r[f.status]] || ''), durasi: Number(r[f.durasi]) || 0,
     tmp: Number(r[f.tmp]) || 0, tmpLabel: String(r[f.tmpLabel] || ''), nyala: String(r[f.nyala] || ''), tambah: Number(r[f.tambahDaya]) || 0,
   }));
   const known = res.ulps || [];
@@ -1543,24 +1563,20 @@ function dtShow() {
   if (!DT.res && !DT.loading) loadDt();
 }
 
-/** Permohonan sesuai status (dan bulan nyala untuk yang sudah selesai). */
+/** Daftar tunggu: status yang dicentang (Bayar, Cetak PK, PDL Awal). */
 function dtBase() {
-  return DT.rows.filter((r) => (DT.status === 'selesai' ? r.selesai && (!DT.bulan || r.nyala.slice(0, 7) === DT.bulan) : !r.selesai));
+  return DT.rows.filter((r) => DT.st[r.status]);
 }
 
 function dtControls(enabled) {
-  ['dt-status-tunggu', 'dt-status-selesai', 'dt-bulan', 'dt-tmp', 'dt-metric-pb', 'dt-metric-daya', 'dt-cal-ulp'].forEach((id) => { $(id).disabled = !enabled; });
-  $('dt-n-tunggu').textContent = enabled ? `(${dtFmt(DT.rows.filter((r) => !r.selesai).length)})` : '';
-  $('dt-n-selesai').textContent = enabled ? `(${dtFmt(DT.rows.filter((r) => r.selesai).length)})` : '';
+  const ids = DT_STATUS.map((s) => 'dt-st-' + s.id).concat(['dt-tmp', 'dt-metric-pb', 'dt-metric-daya', 'dt-cal-ulp']);
+  ids.forEach((id) => { $(id).disabled = !enabled; });
+  DT_STATUS.forEach((s) => {
+    $('dt-n-' + s.id).textContent = enabled ? `(${dtFmt(DT.rows.filter((r) => r.status === s.key).length)})` : '';
+    $('dt-st-' + s.id).checked = !!DT.st[s.key];
+  });
   $('dt-source').textContent = enabled ? `GV_67, tab ${DT.res.sheet || 'DAFTAR_TUNGGU'} · posisi ${dtPosisi()}` : '';
   if (!enabled) return;
-  $('dt-status-' + DT.status).checked = true;
-
-  const months = [...new Set(DT.rows.filter((r) => r.selesai && r.nyala).map((r) => r.nyala.slice(0, 7)))].sort().reverse();
-  if (DT.bulan === null || (DT.bulan && !months.includes(DT.bulan))) DT.bulan = months[0] || '';
-  $('dt-bulan-field').hidden = DT.status !== 'selesai';
-  $('dt-bulan').innerHTML = '<option value="">Semua bulan</option>' + months.map((m) => `<option value="${m}">${dtBulanText(m)}</option>`).join('');
-  $('dt-bulan').value = DT.bulan;
 
   const opts = {};
   dtBase().forEach((r) => {
@@ -1589,7 +1605,7 @@ function renderDt() {
     show(DT.error
       ? `<div class="text-danger fw-bold mb-2"><i class="fas fa-triangle-exclamation me-2" aria-hidden="true"></i>Data daftar tunggu gagal dimuat</div>
          <div class="text-muted small mb-3">${esc(DT.error)}</div>
-         <button type="button" class="btn btn-primary btn-sm rounded-12 px-4" data-dt-retry><i class="fas fa-rotate me-2" aria-hidden="true"></i>Coba lagi</button>`
+         <button type="button" class="btn btn-primary btn-sm rounded-12 px-4 dt-btn" data-dt-retry><i class="fas fa-rotate me-2" aria-hidden="true"></i>Coba lagi</button>`
       : '<div class="spinner-border text-primary mb-3" role="status"><span class="visually-hidden">Memuat</span></div><div class="fw-600 text-muted">Memuat daftar tunggu dari tab DAFTAR_TUNGGU…</div>');
     return;
   }
@@ -1661,15 +1677,14 @@ function dtRenderRekap() {
   const pct = (n) => (rows.length ? ` (${dtFmt((n / rows.length) * 100, 1)}%)` : '');
   const facts = DT_JENIS.map((j) => `<li><b>${dtFmt(byJenis(j.key))}</b>${esc(j.name)}</li>`);
   if (k) facts.push(`<li class="${lewat ? 'warn' : ''}"><b>${dtFmt(lewat)}${lewat ? pct(lewat) : ''}</b>Lewat TMP</li>`);
-  if (k && DT.status === 'tunggu') {
+  if (k) {
     const batas = rows.filter((r) => r.durasi === k).length;
     facts.push(`<li class="${batas ? 'warn' : ''}"><b>${dtFmt(batas)}</b>Tepat di batas ${k} hari</li>`);
   }
-  if (DT.status === 'selesai' && rows.length) facts.push(`<li><b>${dtFmt(rows.reduce((s, r) => s + r.durasi, 0) / rows.length, 1)} hari</b>Rata-rata durasi</li>`);
 
-  const sub = DT.status === 'tunggu'
-    ? `Sudah bayar, belum selesai, posisi ${dtPosisi()} · ${tmpText}`
-    : `Selesai (peremajaan) dengan nyala ${DT.bulan ? dtBulanText(DT.bulan) : 'semua bulan'} · ${tmpText}`;
+  const dipilih = DT_STATUS.filter((s) => DT.st[s.key]).map((s) => s.name);
+  const statusText = dipilih.length ? 'Status ' + dipilih.join(', ').replace(/, ([^,]*)$/, ' dan $1') : 'Belum ada status yang dipilih';
+  const sub = `${statusText}, posisi ${dtPosisi()} · ${tmpText}`;
 
   // Legenda warna dari batas TMP terpilih
   let legend = '';
@@ -1683,8 +1698,9 @@ function dtRenderRekap() {
     }).join('') + `<span><i class="dt-lx" aria-hidden="true"></i>${k + 1} hari ke atas (lewat TMP)</span></div>`;
   }
   const sk = DT.res.skipped || {};
-  const skip = [sk.batal ? `${dtFmt(sk.batal)} permohonan batal` : '', sk.belumBayar ? `${dtFmt(sk.belumBayar)} yang belum bayar` : '',
-    sk.jenisLain ? `${dtFmt(sk.jenisLain)} jenis transaksi lain` : ''].filter(Boolean);
+  const skip = Object.entries(sk.status || {}).sort((a, b) => b[1] - a[1]).map(([s, n]) => `${dtFmt(n)} ${s}`)
+    .concat(sk.tanpaDurasi ? [`${dtFmt(sk.tanpaDurasi)} tanpa durasi hari kerja`] : [])
+    .concat(sk.jenisLain ? [`${dtFmt(sk.jenisLain)} jenis transaksi lain`] : []);
 
   $('dt-rekap').innerHTML = `
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
@@ -1709,10 +1725,10 @@ function dtRenderRekap() {
 
 function dtRenderCal() {
   const pb = DT.metric === 'pb';
-  const nyala = DT.rows.filter((r) => r.nyala);
+  const nyala = DT.rows.filter((r) => r.status === DT_SELESAI && r.nyala);
   if (!nyala.length) {
     $('dt-cal-sub').textContent = '';
-    $('dt-cal').innerHTML = '<div class="empty-state">Belum ada permohonan yang nyala di data GV_67 ini.</div>';
+    $('dt-cal').innerHTML = '<div class="empty-state">Belum ada permohonan berstatus PEREMAJAAN di data GV_67 ini.</div>';
     return;
   }
   const dates = nyala.map((r) => r.nyala).sort();
@@ -1729,7 +1745,7 @@ function dtRenderCal() {
   const total = vals.reduce((s, v) => s + v, 0);
   const topDay = Object.keys(val).sort((a, b) => val[b] - val[a] || a.localeCompare(b))[0];
   const unitName = DT.ulp ? dtNama(DT.ulp) : 'UP3 Tahuna';
-  $('dt-cal-sub').textContent = `${pb ? 'Pasang Baru' : 'Penambahan daya dari Perubahan Daya dan Migrasi (DAYA − DAYA_LAMA)'}, per tanggal nyala, ${unitName}, `
+  $('dt-cal-sub').textContent = `${pb ? 'Pasang Baru' : 'Penambahan daya dari Perubahan Daya dan Migrasi (DAYA − DAYA_LAMA)'} berstatus PEREMAJAAN, per tanggal nyala, ${unitName}, `
     + `${dtTgl(start, true)} s.d. ${dtTgl(end, true)}: ${show(total)} ${unit}`
     + (topDay && val[topDay] > 0 ? `. Tertinggi ${show(val[topDay])} ${unit} pada ${DT_HARI_PANJANG[dtDow(dtDate(topDay))]}, ${dtTgl(dtDate(topDay), true)}.` : '.');
 
@@ -1761,8 +1777,7 @@ function dtRenderCal() {
 }
 
 function dtInit() {
-  document.querySelectorAll('input[name="dt-status"]').forEach((el) => el.addEventListener('change', () => { DT.status = el.value; renderDt(); }));
-  $('dt-bulan').addEventListener('change', (e) => { DT.bulan = e.target.value; renderDt(); });
+  document.querySelectorAll('input[name="dt-status"]').forEach((el) => el.addEventListener('change', () => { DT.st[el.value] = el.checked; renderDt(); }));
   $('dt-tmp').addEventListener('change', (e) => { DT.tmp = e.target.value; renderDt(); });
   document.querySelectorAll('input[name="dt-metric"]').forEach((el) => el.addEventListener('change', () => { DT.metric = el.value; dtRenderCal(); }));
   $('dt-cal-ulp').addEventListener('change', (e) => { DT.ulp = e.target.value; dtRenderCal(); });
