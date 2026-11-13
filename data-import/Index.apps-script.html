@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><?= cfg.APP_TITLE ?></title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+
+  <style>
+    :root {
+      --pln-blue: #00A3E1;
+      --pln-gold: #FFD100;
+      --navy: #125D72;
+      --bg: #F1F5F9;
+      --ink: #334155;
+      --sidebar-w: 260px;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Poppins', sans-serif; overflow: hidden; }
+    .fw-600 { font-weight: 600 !important; }
+    .fw-800 { font-weight: 800 !important; }
+    .rounded-12 { border-radius: 12px !important; }
+    .rounded-16 { border-radius: 16px !important; }
+    .eyebrow { font-size: .7rem; letter-spacing: 1px; }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      position: fixed; top: 0; bottom: 0; left: 0; width: var(--sidebar-w);
+      background: var(--navy); color: #fff; z-index: 1040; overflow-y: auto;
+      display: flex; flex-direction: column;
+      box-shadow: 5px 0 15px rgba(0,0,0,.1); transition: transform .3s ease;
+    }
+    #sidebar .brand img { width: 100px; }
+    #sidebar .brand small { color: var(--pln-gold); font-size: .7rem; letter-spacing: 1px; }
+    #sidebar .menu { list-style: none; padding: 0; margin: 8px 0 0; }
+    #sidebar .menu a {
+      display: flex; align-items: center; gap: 10px; padding: 12px 15px; margin: 4px 15px 4px 5px;
+      color: #cbd5e1; font-size: .9rem; text-decoration: none; border-radius: 10px;
+      border-left: 4px solid transparent; transition: all .25s ease; cursor: pointer;
+    }
+    #sidebar .menu a i { width: 20px; text-align: center; }
+    #sidebar .menu a:hover { background: rgba(255,255,255,.1); color: var(--pln-gold); padding-left: 18px; }
+    #sidebar .menu a.active-link {
+      background: linear-gradient(90deg, rgba(255,255,255,.15), rgba(255,255,255,0));
+      color: #fff; border-left-color: var(--pln-gold); font-weight: 600;
+    }
+    #sidebar .foot { margin-top: auto; padding: 16px; text-align: center; opacity: .5; font-size: 9px; letter-spacing: .5px; }
+    #backdrop { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 1030; }
+
+    /* ── Main ── */
+    #main { margin-left: var(--sidebar-w); height: 100vh; overflow-y: auto; overflow-x: hidden; padding: 30px; transition: margin-left .3s ease; }
+    body.sidebar-collapsed #sidebar { transform: translateX(-100%); }
+    body.sidebar-collapsed #main { margin-left: 0; }
+    @media (max-width: 991.98px) {
+      #sidebar { transform: translateX(-100%); }
+      #main { margin-left: 0; padding: 15px; }
+      body.sidebar-open #sidebar { transform: none; }
+      body.sidebar-open #backdrop { display: block; }
+    }
+
+    .topbar {
+      position: sticky; top: 0; z-index: 1020; display: flex; align-items: center; gap: 12px;
+      background: rgba(255,255,255,.9); backdrop-filter: blur(10px);
+      border-radius: 16px; padding: 12px 20px; margin-bottom: 25px; box-shadow: var(--shadow);
+    }
+    @media (max-width: 991.98px) { .topbar { margin-bottom: 15px; padding: 10px 15px; } }
+    #page-title { font-weight: 800; letter-spacing: -.2px; }
+
+    /* ── KPI cards ── */
+    .kpi-card {
+      position: relative; height: 100%; padding: 20px; border-radius: 16px; overflow: hidden;
+      display: flex; flex-direction: column; background: #fff; box-shadow: var(--shadow); transition: all .3s ease;
+    }
+    .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0,0,0,.15); }
+    .kpi-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px; opacity: .85; }
+    .kpi-value { font-size: 1.8rem; font-weight: 800; line-height: 1.2; margin-bottom: 10px; }
+    .kpi-sub { font-size: .85rem; font-weight: 600; margin-top: auto; }
+    .kpi-icon { background: rgba(255,255,255,.25); border-radius: 12px; padding: 8px 10px; }
+    .bg-gradient-ulp  { background: linear-gradient(135deg, #2c3e50 0%, #4b6cb7 100%); color: #fff; }
+    .bg-gradient-plg  { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: #fff; }
+    .bg-gradient-seg  { background: linear-gradient(135deg, #059669 0%, #0ea5e9 100%); color: #fff; }
+    .bg-gradient-blue { background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: #fff; }
+
+    /* ── Cards & charts ── */
+    .chart-card { background: #fff; border: 0; border-radius: 16px; box-shadow: var(--shadow); padding: 16px; height: 100%; }
+    .chart-box { position: relative; height: 230px; }
+    .chart-scroll { height: 250px; overflow-y: auto; overflow-x: hidden; padding-right: 5px; }
+    .icon-chip { padding: 8px 10px; border-radius: 12px; }
+
+    /* ── Table ── */
+    .data-card { background: #fff; border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
+    .table-wrap { max-height: 520px; overflow: auto; }
+    .data-table { font-size: .8rem; margin: 0; }
+    .data-table thead th {
+      position: sticky; top: 0; z-index: 2; background: #f8f9fa !important; color: #64748b;
+      font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .5px;
+      white-space: nowrap; padding: 12px 14px; border-bottom: 1px solid #e2e8f0;
+    }
+    .data-table tbody td { white-space: nowrap; padding: 10px 14px; font-weight: 600; color: #1e293b; vertical-align: middle; }
+    .data-table td.wrap { white-space: normal; min-width: 280px; }
+    .search-group .input-group-text, .search-group .form-control { background: #f1f5f9; border: 0; }
+
+    .filter-control { background: #f1f5f9 !important; border: 0 !important; border-radius: 12px !important; font-weight: 600; box-shadow: none !important; padding-top: .5rem; padding-bottom: .5rem; }
+    .filter-item { flex: 1; min-width: 150px; }
+    .data-table td.num { text-align: center; }
+    .data-table td.total { text-align: center; font-weight: 800; color: #0f172a; background: #f8fafc; }
+    .map-link { color: #0369a1; text-decoration: none; }
+    .map-link:hover { text-decoration: underline; }
+
+    /* ── SOREK top-10 ── */
+    .seg-toggle .btn { font-weight: 600; font-size: .78rem; border-radius: 10px !important; padding: .4rem .8rem; }
+    .seg-toggle { gap: 4px; background: #f1f5f9; border-radius: 12px; padding: 3px; }
+    .seg-toggle .btn-check + .btn { border: 0; color: #475569; background: transparent; }
+    .seg-toggle .btn-check:checked + .btn { background: #fff; color: #0369a1; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+    .rank-list { list-style: none; margin: 0; padding: 0; }
+    .rank-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+    .rank-item:last-child { border-bottom: 0; }
+    .rank-no {
+      flex: 0 0 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-size: .75rem; font-weight: 800; background: #f1f5f9; color: #475569;
+    }
+    .rank-item:nth-child(-n+3) .rank-no { background: #125D72; color: #fff; }
+    #top-telat .rank-item .rank-no { background: #f1f5f9; color: #475569; }
+    #top-telat .rank-item .rank-no.top { background: #125D72; color: #fff; }
+    .rank-body { flex: 1; min-width: 0; }
+    .rank-top { display: flex; align-items: baseline; gap: 6px; }
+    .rank-name { font-weight: 700; font-size: .82rem; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank-val { margin-left: auto; font-weight: 800; font-size: .82rem; color: #0f172a; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .rank-meta { font-size: .7rem; color: #64748b; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank-bar { height: 4px; background: #f1f5f9; border-radius: 4px; margin-top: 5px; overflow: hidden; }
+    .rank-bar > div { height: 100%; border-radius: 4px; }
+    .rank-prio { color: #d97706; font-size: .7rem; flex: 0 0 auto; }
+    .empty-state { text-align: center; color: #64748b; font-size: .82rem; padding: 32px 12px; }
+    .empty-state i { font-size: 1.6rem; color: #cbd5e1; display: block; margin-bottom: 10px; }
+
+    /* ── Sidebar: grup menu NPS ── */
+    #sidebar .menu .caret { width: auto; margin-left: auto; font-size: .65rem; opacity: .7; transition: transform .25s ease; }
+    #sidebar .menu li.open > a .caret { transform: rotate(180deg); }
+    #sidebar .menu a.group-active { color: #fff; font-weight: 600; }
+    #sidebar .submenu { list-style: none; padding: 0; margin: 0 0 4px; display: none; }
+    #sidebar li.open > .submenu { display: block; }
+    #sidebar .submenu a { padding: 9px 12px 9px 16px; margin: 2px 15px 2px 26px; font-size: .8rem; line-height: 1.3; }
+    #sidebar .submenu a:hover { padding-left: 19px; }
+    #sidebar .submenu a i { font-size: .8rem; }
+    #sidebar .sub-note { padding: 6px 15px 6px 50px; font-size: .75rem; color: #94a3b8; }
+    #sidebar .sub-retry { background: none; border: 0; padding: 0; color: var(--pln-gold); text-decoration: underline; font-size: .75rem; }
+
+    /* ── NPS ── */
+    .nps-kpi { cursor: pointer; }
+    .nps-kpi .kpi-label { font-size: .68rem; letter-spacing: .8px; line-height: 1.35; }
+    .nps-kpi .kpi-value { font-size: 1.6rem; margin-bottom: 6px; }
+    .nps-kpi .kpi-sub { font-size: .75rem; opacity: .9; }
+    .nps-section { scroll-margin-top: 95px; }
+    .nps-stat { background: #f8fafc; border-radius: 12px; padding: 10px 12px; height: 100%; }
+    .nps-stat .lbl { font-size: .64rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .5px; line-height: 1.3; }
+    .nps-stat .val { font-size: 1.05rem; font-weight: 800; color: #0f172a; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .nps-stat .val.good { color: #059669; }
+    .nps-stat .val.bad { color: #dc2626; }
+    .nps-pill { display: inline-block; font-size: .72rem; font-weight: 700; border-radius: 999px; padding: .2rem .65rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .nps-pill.good { background: #d1fae5; color: #047857; }
+    .nps-pill.bad { background: #fee2e2; color: #b91c1c; }
+    .nps-pill.na { background: #f1f5f9; color: #64748b; }
+    .nps-sub-title { font-size: .72rem; font-weight: 700; color: #64748b; margin-bottom: 6px; }
+    .nps-stale { color: #b45309; font-weight: 600; font-size: .75rem; margin-top: 2px; }
+    .nps-detail summary { cursor: pointer; font-size: .8rem; font-weight: 700; color: #0369a1; list-style: none; padding: 6px 0; }
+    .nps-detail summary::-webkit-details-marker { display: none; }
+    .nps-detail summary i { transition: transform .2s ease; }
+    .nps-detail[open] summary i { transform: rotate(90deg); }
+    .nps-table-wrap { overflow-x: auto; border: 1px solid #f1f5f9; border-radius: 12px; margin-top: 6px; }
+    .nps-table td, .nps-table th { text-align: right; }
+    .nps-table td:first-child, .nps-table th:first-child { text-align: left; position: sticky; left: 0; background: #fff; z-index: 1; }
+    .nps-table thead th:first-child { z-index: 3; }
+    .nps-table tr.total td { background: #f8fafc; font-weight: 800; }
+    .nps-table tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--pln-blue); }
+
+    /* ── Daftar Tunggu ── */
+    /* Warna sel = posisi durasi hari kerja terhadap batas TMP: hijau di awal, merah di batas, merah tua lewat batas. */
+    .dt-l0 { --dt-bg: #166534; --dt-fg: #fff; }
+    .dt-l1 { --dt-bg: #86efac; --dt-fg: #14532d; }
+    .dt-l2 { --dt-bg: #fde68a; --dt-fg: #78350f; }
+    .dt-l3 { --dt-bg: #fdba74; --dt-fg: #7c2d12; }
+    .dt-l4 { --dt-bg: #dc2626; --dt-fg: #fff; }
+    .dt-lx { --dt-bg: #7f1d1d; --dt-fg: #fff; }
+    .dt-nk { --dt-bg: #e6f2f5; --dt-fg: #125D72; }
+    .dt-filter { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; }
+    .dt-field { display: flex; flex-direction: column; gap: 3px; min-width: 170px; }
+    .dt-field label, .dt-field .dt-lbl { font-size: .7rem; font-weight: 700; color: #475569; }
+    .dt-field .filter-control { min-height: 44px; }
+    .dt-field .seg-toggle .btn { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
+    .dt-source { margin-left: auto; font-size: .75rem; font-weight: 600; color: #64748b; text-align: right; }
+    .dt-title { font-size: 1rem; font-weight: 800; color: #0f172a; margin: 0; }
+    .dt-sub { font-size: .76rem; font-weight: 600; color: #475569; margin-top: 2px; }
+    .dt-total { font-weight: 800; font-size: .8rem; color: #125D72; background: #e6f2f5; border-radius: 999px; padding: .35rem .85rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .dt-facts { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 14px 0; padding: 0; list-style: none; }
+    .dt-facts li { font-size: .76rem; font-weight: 600; color: #475569; }
+    .dt-facts b { display: block; font-size: 1.15rem; font-weight: 800; color: #0f172a; font-variant-numeric: tabular-nums; line-height: 1.25; }
+    .dt-facts .warn b { color: #b91c1c; }
+    .dt-wrap { position: relative; overflow: auto; max-height: min(72vh, 680px); border: 1px solid #e2e8f0; border-radius: 12px; }
+    .dt-wrap:focus-visible { outline: 3px solid #125D72; outline-offset: 2px; }
+    .dt-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .8rem; font-variant-numeric: tabular-nums; }
+    .dt-table th, .dt-table td { text-align: center; border-bottom: 1px solid #eef2f6; white-space: nowrap; }
+    .dt-table thead th { position: sticky; background: #125D72; color: #fff; z-index: 2; font-weight: 700; }
+    .dt-table thead tr:first-child th { top: 0; height: 30px; font-size: .68rem; padding: 4px 6px; border-bottom: 1px solid rgba(255,255,255,.25); }
+    .dt-table thead tr:last-child th { top: 30px; padding: 6px 4px 0; min-width: 46px; }
+    .dt-table thead th.dt-band-out { background: #7f1d1d; }
+    .dt-table thead th.dt-unit { left: 0; z-index: 3; text-align: left; padding-left: 12px; width: 200px; min-width: 150px; }
+    .dt-table thead th.dt-sum { width: 84px; min-width: 64px; }
+    .dt-hint { display: none; font-size: .72rem; font-weight: 600; color: #64748b; margin-bottom: 6px; }
+    .dt-d { display: block; font-size: .95rem; font-weight: 800; line-height: 1.1; }
+    .dt-h { display: block; font-size: .62rem; font-weight: 600; color: #d0dfe3; }
+    .dt-key { display: block; height: 5px; margin: 5px -4px 0; background: var(--dt-bg); }
+    .dt-table tbody th, .dt-table tfoot th { position: sticky; left: 0; z-index: 1; background: #fff; text-align: left; font-weight: 600; color: #1e293b; padding: 0 10px 0 12px; }
+    .dt-table td { height: 36px; min-width: 46px; padding: 0 4px; font-weight: 700; color: #1e293b; }
+    .dt-table td.dt-n { background: var(--dt-bg); color: var(--dt-fg); }
+    .dt-table td.dt-0 { color: #64748b; font-weight: 600; }
+    .dt-table td.dt-sum { background: #f8fafc; font-weight: 800; color: #0f172a; border-left: 1px solid #e2e8f0; }
+    .dt-table td.dt-sum.dt-0 { color: #64748b; }
+    .dt-code { font-size: .68rem; font-weight: 600; color: #64748b; margin-right: 6px; }
+    .dt-ulp th { padding-left: 34px !important; }
+    .dt-grp th, .dt-grp td.dt-0, .dt-grp td.dt-sum { background: #f8fafc; }
+    .dt-grp th { padding: 0 8px 0 6px !important; }
+    .dt-toggle {
+      display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 8px; border: 0; border-radius: 8px;
+      background: transparent; font: inherit; font-weight: 800; color: #0f172a; cursor: pointer; text-align: left;
+    }
+    .dt-toggle:hover { background: #e6f2f5; }
+    .dt-toggle:active { background: #d3e8ee; }
+    .dt-toggle:focus-visible { outline: 3px solid #125D72; outline-offset: -3px; }
+    .dt-toggle i { font-size: .7rem; color: #125D72; transition: transform .2s ease; }
+    .dt-toggle[aria-expanded="false"] i { transform: rotate(-90deg); }
+    .dt-table tfoot th, .dt-table tfoot td { position: sticky; bottom: 0; border-top: 2px solid #125D72; font-weight: 800; height: 40px; }
+    .dt-table tfoot th { z-index: 2; background: #e6f2f5; color: #125D72; }
+    .dt-table tfoot td.dt-0, .dt-table tfoot td.dt-sum { background: #e6f2f5; }
+    .dt-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 12px; font-size: .72rem; font-weight: 600; color: #475569; }
+    .dt-legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .dt-legend i { width: 14px; height: 14px; border-radius: 4px; background: var(--dt-bg); }
+    .dt-note { font-size: .72rem; font-weight: 600; color: #64748b; margin-top: 8px; }
+
+    /* Kalender: satu baris per minggu (Senin s.d. Minggu), lingkaran makin besar makin banyak */
+    .dt-cal-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between; margin-bottom: 6px; }
+    .dt-cal { width: 100%; table-layout: fixed; border-collapse: collapse; }
+    .dt-cal thead th { font-size: .7rem; font-weight: 700; color: #64748b; text-align: center; padding: 8px 0 4px; }
+    .dt-cal .dt-wk th { padding: 14px 2px 4px; border-top: 1px solid #eef2f6; }
+    .dt-cal tbody:first-of-type .dt-wk th { border-top: 0; }
+    .dt-wk-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: .8rem; font-weight: 700; color: #0f172a; }
+    .dt-wk-row b { font-weight: 800; font-variant-numeric: tabular-nums; }
+    .dt-cal td { text-align: center; vertical-align: middle; height: 64px; padding: 2px 0; }
+    .dt-day { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; height: 100%; }
+    .dt-bub {
+      --min: 28px; --max: 44px;
+      width: calc(var(--min) + (var(--max) - var(--min)) * var(--f, 0)); aspect-ratio: 1; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: #125D72; color: #fff; font-size: .68rem; font-weight: 700; font-variant-numeric: tabular-nums;
+    }
+    .dt-bub.neg { background: #fff; color: #125D72; box-shadow: inset 0 0 0 2px #125D72; }
+    .dt-dot { width: 6px; height: 6px; border-radius: 50%; background: #cbd5e1; margin: 11px 0; }
+    .dt-dn { font-size: .62rem; font-weight: 600; color: #64748b; line-height: 1; }
+    @media (min-width: 992px) {
+      .dt-bub { --min: 30px; --max: 58px; }
+      .dt-cal td { height: 76px; }
+    }
+    @media (max-width: 575.98px) {
+      .dt-field { min-width: 0; flex: 1 1 100%; }
+      .dt-field .seg-toggle { display: flex; }
+      .dt-field .seg-toggle .btn { flex: 1 1 0; padding-left: .4rem; padding-right: .4rem; }
+      .dt-source { margin-left: 0; text-align: left; flex-basis: 100%; }
+      .dt-table thead th.dt-unit { width: 108px; min-width: 108px; }
+      .dt-ulp th { padding-left: 14px !important; }
+      .dt-toggle { white-space: normal; gap: 6px; padding: 4px 4px; line-height: 1.2; }
+      .dt-code { display: block; margin: 0; line-height: 1.1; }
+      .dt-hint { display: block; }
+      .dt-bub { --min: 26px; --max: 40px; font-size: .64rem; }
+      .dt-cal td { height: 58px; }
+    }
+    /* ── /Daftar Tunggu ── */
+
+    /* ── Loading ── */
+    #loading {
+      position: fixed; inset: 0; z-index: 2000; display: none; align-items: center; justify-content: center;
+      background: rgba(255,255,255,.9); backdrop-filter: blur(8px);
+    }
+    #loading.show { display: flex; }
+  </style>
+</head>
+<body>
+
+  <!-- ─────────── SIDEBAR ─────────── -->
+  <nav id="sidebar">
+    <div class="brand p-4 text-center">
+      <img src="<?= cfg.LOGO_URL ?>" alt="Logo" class="mb-3" onerror="this.style.display='none'">
+      <h5 class="fw-bold mb-1 text-white"><?= cfg.SIDEBAR_TITLE ?></h5>
+      <small class="fw-bold text-uppercase"><?= cfg.SIDEBAR_SUBTITLE ?></small>
+    </div>
+
+    <ul class="menu">
+      <li><a href="#" data-page="prioritas"><i class="fas fa-crown"></i><span>Pelanggan Prioritas</span></a></li>
+      <li class="open">
+        <a href="#" data-group="nps"><i class="fas fa-chart-line"></i><span>NPS</span><i class="fas fa-chevron-down caret"></i></a>
+        <ul id="nps-submenu" class="submenu"><li class="sub-note">Memuat…</li></ul>
+      </li>
+      <!-- dt-menu --><li><a href="#" data-page="daftar-tunggu"><i class="fas fa-user-clock" aria-hidden="true"></i><span>Daftar Tunggu</span></a></li><!-- /dt-menu -->
+      <li><a href="#" data-page="updated"><i class="fas fa-clock-rotate-left"></i><span>Updated Soon</span></a></li>
+    </ul>
+
+    <div class="foot text-white"><?= cfg.FOOTER ?></div>
+  </nav>
+  <div id="backdrop"></div>
+
+  <!-- ─────────── MAIN ─────────── -->
+  <div id="main">
+    <div class="topbar">
+      <button id="btn-sidebar" class="btn btn-light shadow-sm border-0 rounded-12 p-2" aria-label="Menu">
+        <i class="fas fa-bars text-primary" style="font-size:1.2rem"></i>
+      </button>
+      <h6 id="page-title" class="mb-0 text-dark text-uppercase">Pelanggan Prioritas</h6>
+      <div class="ms-auto d-flex align-items-center">
+        <span id="net-status" class="badge rounded-pill px-3 py-2 me-3 d-none d-lg-inline-block bg-success-subtle text-success fw-600">
+          <i class="fas fa-circle me-1" style="font-size:7px"></i> Online
+        </span>
+        <div class="fw-600 border-start ps-3 d-flex align-items-center text-dark" style="font-size:.9rem">
+          <i class="far fa-clock me-2 text-primary d-none d-sm-block"></i>
+          <span id="clock" class="font-monospace">00:00:00</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═════════ PAGE: PELANGGAN PRIORITAS ═════════ -->
+    <section id="page-prioritas" class="page-content">
+      <div class="card border-0 shadow-sm rounded-16 mb-4">
+        <div class="card-body p-3">
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            <div class="px-3 border-end d-none d-lg-block">
+              <span class="fw-800 text-muted text-uppercase eyebrow"><i class="fas fa-filter text-primary me-2"></i>Filter Data</span>
+            </div>
+            <div class="filter-item"><select id="f-ulp" class="form-select form-select-sm filter-control"><option value="">-- SEMUA ULP --</option></select></div>
+            <div class="filter-item"><select id="f-kategori" class="form-select form-select-sm filter-control"><option value="">-- SEMUA KATEGORI --</option></select></div>
+            <div class="filter-item">
+              <input id="f-segmentasi" list="dl-segmentasi" class="form-control form-control-sm filter-control" placeholder="Segmentasi..." autocomplete="off">
+              <datalist id="dl-segmentasi"></datalist>
+            </div>
+            <div class="filter-item">
+              <input id="f-penyulang" list="dl-penyulang" class="form-control form-control-sm filter-control" placeholder="Penyulang..." autocomplete="off">
+              <datalist id="dl-penyulang"></datalist>
+            </div>
+            <button id="btn-apply" class="btn btn-primary btn-sm rounded-12 px-4 py-2 fw-800 shadow-sm"><i class="fas fa-sync-alt me-2"></i>TERAPKAN</button>
+            <button id="btn-reset" class="btn btn-light btn-sm rounded-12 px-3 py-2 fw-600" title="Reset filter"><i class="fas fa-rotate-left"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+          <div class="kpi-card bg-gradient-ulp">
+            <div class="d-flex justify-content-between align-items-start">
+              <div><div class="kpi-label">Jumlah ULP</div><h2 id="kpi-ulp" class="kpi-value mb-0">0</h2></div>
+              <div class="kpi-icon"><i class="fas fa-building"></i></div>
+            </div>
+            <div class="kpi-sub mt-3"><i class="fas fa-map-marker-alt me-1"></i> Terdaftar</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="kpi-card bg-gradient-plg">
+            <div class="d-flex justify-content-between align-items-start">
+              <div><div class="kpi-label">Jumlah Pelanggan</div><h2 id="kpi-total" class="kpi-value mb-0">0</h2></div>
+              <div class="kpi-icon"><i class="fas fa-users"></i></div>
+            </div>
+            <div class="kpi-sub mt-3"><i class="fas fa-check-circle me-1"></i> Terverifikasi</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="kpi-card bg-gradient-seg">
+            <div class="d-flex justify-content-between align-items-start">
+              <div><div class="kpi-label">Jumlah Segmen</div><h2 id="kpi-segmen" class="kpi-value mb-0">0</h2></div>
+              <div class="kpi-icon"><i class="fas fa-layer-group"></i></div>
+            </div>
+            <div class="kpi-sub mt-3"><i class="fas fa-tag me-1"></i> Kategori</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="kpi-card bg-gradient-blue">
+            <div class="d-flex justify-content-between align-items-start">
+              <div><div class="kpi-label">Jumlah Penyulang</div><h2 id="kpi-penyulang" class="kpi-value mb-0">0</h2></div>
+              <div class="kpi-icon"><i class="fas fa-broadcast-tower"></i></div>
+            </div>
+            <div class="kpi-sub mt-3"><i class="fas fa-bolt me-1"></i> Jalur Suplai Aktif</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+          <div class="chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div><h6 id="padam-title" class="fw-800 text-uppercase text-muted mb-0 eyebrow">Frekuensi Padam</h6><small id="padam-sub" class="text-primary fw-600">Kejadian per Bulan</small></div>
+              <div class="icon-chip bg-primary bg-opacity-10"><i class="fas fa-chart-line text-primary"></i></div>
+            </div>
+            <div class="chart-box"><canvas id="chart-line"></canvas></div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div><h6 class="fw-800 text-uppercase text-muted mb-0 eyebrow">Kategori</h6><small class="text-warning fw-600">Kategori Utama</small></div>
+              <div class="icon-chip bg-warning bg-opacity-10"><i class="fas fa-tags text-warning"></i></div>
+            </div>
+            <div class="chart-box"><canvas id="chart-kategori"></canvas></div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div><h6 id="pie-title" class="fw-800 text-uppercase text-muted mb-0 eyebrow">Sebaran ULP</h6><small id="pie-sub" class="text-info fw-600">Wilayah Kerja</small></div>
+              <div class="icon-chip bg-info bg-opacity-10"><i class="fas fa-map-marked-alt text-info"></i></div>
+            </div>
+            <div class="chart-box"><canvas id="chart-pie"></canvas></div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div><h6 class="fw-800 text-uppercase text-muted mb-0 eyebrow">Sebaran Segmen</h6><small class="text-success fw-600">Statistik Data Lengkap</small></div>
+              <div class="icon-chip bg-success bg-opacity-10"><i class="fas fa-list-ul text-success"></i></div>
+            </div>
+            <div class="chart-scroll"><div id="bar-holder" style="position:relative;height:250px"><canvas id="chart-segmen"></canvas></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SOREK: pemakaian & pendapatan ── -->
+      <div class="card border-0 shadow-sm rounded-16 mb-3">
+        <div class="card-body p-3">
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            <div class="px-3 border-end d-none d-lg-block">
+              <span class="fw-800 text-muted text-uppercase eyebrow"><i class="fas fa-file-invoice-dollar text-primary me-2"></i>Data SOREK</span>
+            </div>
+            <div class="filter-item" style="max-width:220px">
+              <select id="f-sorek-bulan" class="form-select form-select-sm filter-control" aria-label="Bulan SOREK"><option value="">Memuat…</option></select>
+            </div>
+            <div class="d-flex seg-toggle" role="group" aria-label="Cakupan pelanggan">
+              <input type="radio" class="btn-check" name="sorek-scope" id="scope-all" value="all" checked>
+              <label class="btn btn-sm" for="scope-all">Semua pelanggan</label>
+              <input type="radio" class="btn-check" name="sorek-scope" id="scope-prio" value="prio">
+              <label class="btn btn-sm" for="scope-prio"><i class="fas fa-crown me-1"></i>Prioritas</label>
+            </div>
+            <small id="sorek-note" class="text-muted fw-600 ms-lg-auto"></small>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-xl-4 col-lg-6">
+          <div class="chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div><h6 class="fw-800 text-uppercase text-muted mb-0 eyebrow">10 Pelanggan kWh Tertinggi</h6><small id="kwh-sub" class="text-primary fw-600">Pemakaian kWh</small></div>
+              <div class="icon-chip bg-primary bg-opacity-10"><i class="fas fa-bolt text-primary"></i></div>
+            </div>
+            <ol id="top-kwh" class="rank-list"></ol>
+          </div>
+        </div>
+        <div class="col-xl-4 col-lg-6">
+          <div class="chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div><h6 class="fw-800 text-uppercase text-muted mb-0 eyebrow">10 Pelanggan RPPTL Tertinggi</h6><small id="rpptl-sub" class="text-success fw-600">Pendapatan RPPTL</small></div>
+              <div class="icon-chip bg-success bg-opacity-10"><i class="fas fa-sack-dollar text-success"></i></div>
+            </div>
+            <ol id="top-rpptl" class="rank-list"></ol>
+          </div>
+        </div>
+        <div class="col-xl-4 col-lg-12">
+          <div class="chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div><h6 class="fw-800 text-uppercase text-muted mb-0 eyebrow">10 Pelanggan History Menunggak</h6><small id="telat-sub" class="text-danger fw-600">Pelunasan tanggal 21–31</small></div>
+              <div class="icon-chip bg-danger bg-opacity-10"><i class="fas fa-clock-rotate-left text-danger"></i></div>
+            </div>
+            <ol id="top-telat" class="rank-list"></ol>
+            <div id="telat-note" class="text-muted fw-600 mt-2" style="font-size:.7rem"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-card mb-4">
+        <div class="bg-white py-3 px-3 d-flex flex-wrap gap-3 justify-content-between align-items-center border-bottom">
+          <div class="d-flex align-items-center">
+            <div class="icon-chip bg-primary bg-opacity-10 me-3"><i class="fas fa-database text-primary"></i></div>
+            <div>
+              <h6 class="mb-0 fw-800 text-dark">Data Detail Pelanggan</h6>
+              <small class="text-muted fw-600" style="font-size:.75rem"><span id="count-prioritas">0 baris</span> · Monitoring <?= cfg.UNIT_NAME ?></small>
+            </div>
+          </div>
+          <div class="input-group input-group-sm search-group" style="max-width:300px">
+            <span class="input-group-text rounded-start-3 px-3"><i class="fas fa-search text-muted"></i></span>
+            <input id="search-prioritas" type="text" class="form-control rounded-end-3 py-2 fw-600" placeholder="Cari IDPEL / Nama...">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="table table-hover data-table">
+            <thead><tr id="head-prioritas"></tr></thead>
+            <tbody id="body-prioritas"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════════ PAGE: NPS (satu sub-menu per sheet tahun berjalan) ═════════ -->
+    <section id="page-nps" class="page-content d-none">
+      <div class="card border-0 shadow-sm rounded-16 mb-4">
+        <div class="card-body p-3">
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            <div class="px-3 border-end d-none d-lg-block">
+              <span class="fw-800 text-muted text-uppercase eyebrow"><i class="fas fa-sliders text-primary me-2"></i>Tampilan</span>
+            </div>
+            <div class="filter-item"><select id="nps-bulan" class="form-select form-select-sm filter-control" aria-label="Posisi bulan"></select></div>
+            <div class="filter-item"><select id="nps-unit" class="form-select form-select-sm filter-control" aria-label="Unit"></select></div>
+            <div id="nps-source" class="ms-lg-auto px-2 small text-muted fw-600"></div>
+          </div>
+        </div>
+      </div>
+      <div id="nps-kpis" class="row g-3 g-lg-4 mb-4"></div>
+      <div id="nps-sections"></div>
+    </section>
+
+    <!-- ═════════ PAGE: DAFTAR TUNGGU (GV_67) ═════════ -->
+    <section id="page-daftar-tunggu" class="page-content d-none">
+      <div class="card border-0 shadow-sm rounded-16 mb-4">
+        <div class="card-body p-3">
+          <div class="dt-filter">
+            <div class="dt-field">
+              <span class="dt-lbl" id="dt-status-lbl">Status permohonan</span>
+              <div class="btn-group seg-toggle" role="radiogroup" aria-labelledby="dt-status-lbl">
+                <input type="radio" class="btn-check" name="dt-status" id="dt-status-tunggu" value="tunggu" checked>
+                <label class="btn" for="dt-status-tunggu">Masih menunggu <span id="dt-n-tunggu"></span></label>
+                <input type="radio" class="btn-check" name="dt-status" id="dt-status-selesai" value="selesai">
+                <label class="btn" for="dt-status-selesai">Sudah selesai <span id="dt-n-selesai"></span></label>
+              </div>
+            </div>
+            <div class="dt-field" id="dt-bulan-field" hidden>
+              <label for="dt-bulan">Bulan nyala</label>
+              <select id="dt-bulan" class="form-select form-select-sm filter-control"></select>
+            </div>
+            <div class="dt-field">
+              <label for="dt-tmp">Kriteria TMP</label>
+              <select id="dt-tmp" class="form-select form-select-sm filter-control"></select>
+            </div>
+            <div id="dt-source" class="dt-source"></div>
+          </div>
+        </div>
+      </div>
+      <div id="dt-state" class="data-card p-5 text-center mb-4" hidden></div>
+      <div id="dt-content" hidden>
+        <div class="chart-card mb-4" id="dt-rekap"></div>
+        <div class="chart-card mb-4">
+          <div class="dt-cal-head">
+            <div>
+              <h6 class="dt-title">Penyambungan harian</h6>
+              <div class="dt-sub" id="dt-cal-sub"></div>
+            </div>
+            <div class="dt-filter">
+              <div class="dt-field">
+                <span class="dt-lbl" id="dt-metric-lbl">Tampilkan</span>
+                <div class="btn-group seg-toggle" role="radiogroup" aria-labelledby="dt-metric-lbl">
+                  <input type="radio" class="btn-check" name="dt-metric" id="dt-metric-pb" value="pb" checked>
+                  <label class="btn" for="dt-metric-pb">Pasang Baru</label>
+                  <input type="radio" class="btn-check" name="dt-metric" id="dt-metric-daya" value="daya">
+                  <label class="btn" for="dt-metric-daya">Penambahan daya</label>
+                </div>
+              </div>
+              <div class="dt-field">
+                <label for="dt-cal-ulp">Unit</label>
+                <select id="dt-cal-ulp" class="form-select form-select-sm filter-control"></select>
+              </div>
+            </div>
+          </div>
+          <div id="dt-cal"></div>
+        </div>
+      </div>
+    </section>
+    <!-- ═════════ /DAFTAR TUNGGU ═════════ -->
+
+    <!-- ═════════ PAGE: UPDATED SOON ═════════ -->
+    <section id="page-updated" class="page-content d-none">
+      <div class="data-card p-5 text-center">
+        <div class="icon-chip bg-primary bg-opacity-10 d-inline-block mb-3"><i class="fas fa-person-digging text-primary fa-2x"></i></div>
+        <h5 class="fw-800 text-dark">Segera Hadir</h5>
+        <p class="text-muted mb-0">Modul ini sedang dikembangkan.</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- ─────────── LOADING ─────────── -->
+  <div id="loading">
+    <div class="text-center animate__animated animate__pulse animate__infinite">
+      <div class="spinner-border text-primary mb-3" style="width:2.5rem;height:2.5rem" role="status"></div>
+      <div class="fw-bold text-dark small text-uppercase" style="letter-spacing:2px">Synchronizing...</div>
+    </div>
+  </div>
+
+<script>
+/* ═══════════════════ UTIL ═══════════════════ */
+const S = {
+  cols: [], padam: null, ulps: [], rows: [], view: [], sorek: null, sorekObjs: null, menunggak: null, appliedUlp: '', charts: {}, loading: null, loaded: false,
+  page: 'prioritas', nps: null, npsError: '', npsSheet: 0, npsSel: {}, npsCharts: {}, npsLoading: null,
+};
+const $ = (id) => document.getElementById(id);
+const fmt = (n) => Number(n || 0).toLocaleString('id-ID');
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const naturalSort = (a, b) => String(a).localeCompare(String(b), 'id', { numeric: true, sensitivity: 'base' });
+const uniq = (arr) => [...new Set(arr.map((v) => String(v ?? '').trim()).filter(Boolean))].sort(naturalSort);
+const countDistinct = (rows, key) => new Set(rows.map((r) => String(r[key] ?? '').trim()).filter(Boolean)).size;
+const countBy = (rows, key) => rows.reduce((m, r) => { const k = String(r[key] ?? '').trim(); if (k) m[k] = (m[k] || 0) + 1; return m; }, {});
+const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+
+function gas(fn) {
+  return new Promise((resolve, reject) => {
+    google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn]();
+  });
+}
+
+function showLoading() { $('loading').classList.add('show'); }
+function hideLoading() { $('loading').classList.remove('show'); }
+
+function toast(icon, text, timer = 3000) {
+  if (!window.Swal) { console.log(`[${icon}] ${text}`); return; }
+  Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer, timerProgressBar: true, icon, titleText: text });
+}
+
+/* ═══════════════════ LAYOUT ═══════════════════ */
+const PAGE_TITLES = { prioritas: 'Pelanggan Prioritas', nps: 'NPS', 'daftar-tunggu': 'Daftar Tunggu', updated: 'Updated Soon' };
+const isMobile = () => window.innerWidth < 992;
+
+function toggleSidebar() {
+  document.body.classList.toggle(isMobile() ? 'sidebar-open' : 'sidebar-collapsed');
+  if (!isMobile()) setTimeout(() => Object.values(S.charts).concat(Object.values(S.npsCharts)).forEach((c) => c && c.resize()), 320);
+}
+
+function pageTitle(id) {
+  if (id !== 'nps') return PAGE_TITLES[id];
+  const sh = S.nps && S.nps.sheets[S.npsSheet];
+  return sh ? 'NPS · ' + npsTitle(sh.name) : 'NPS';
+}
+
+function markActiveMenu() {
+  document.querySelectorAll('#sidebar [data-page]').forEach((a) => a.classList.toggle('active-link',
+    a.dataset.page === S.page && (S.page !== 'nps' || Number(a.dataset.sheet) === S.npsSheet)));
+  const grp = document.querySelector('#sidebar [data-group="nps"]');
+  if (grp) grp.classList.toggle('group-active', S.page === 'nps');
+}
+
+function showPage(id, sub) {
+  S.page = id;
+  if (id === 'nps' && sub != null) S.npsSheet = sub;
+  document.querySelectorAll('.page-content').forEach((p) => p.classList.toggle('d-none', p.id !== 'page-' + id));
+  markActiveMenu();
+  $('page-title').textContent = pageTitle(id).toUpperCase();
+  const page = $('page-' + id);
+  page.classList.remove('animate__animated', 'animate__fadeIn'); void page.offsetWidth; page.classList.add('animate__animated', 'animate__fadeIn');
+  document.body.classList.remove('sidebar-open');
+  $('main').scrollTop = 0;
+
+  if (id === 'prioritas') {
+    if (S.loaded) renderCharts(S.view); else loadPrioritas();
+  }
+  if (id === 'nps') {
+    renderNps();
+    if (!S.nps) loadNps();
+  }
+  if (id === 'daftar-tunggu') dtShow();
+}
+
+function updateClock() {
+  $('clock').textContent = new Date().toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':');
+}
+
+function updateNetStatus() {
+  const el = $('net-status');
+  const on = navigator.onLine;
+  el.className = `badge rounded-pill px-3 py-2 me-3 d-none d-lg-inline-block fw-600 ${on ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}`;
+  el.innerHTML = `<i class="fas fa-circle me-1" style="font-size:7px"></i> ${on ? 'Online' : 'Offline'}`;
+}
+
+/* ═══════════════════ DATA ═══════════════════ */
+function loadPrioritas() {
+  if (S.loading) return S.loading;
+  showLoading();
+  S.loading = gas('getPrioritasData')
+    .then((res) => {
+      if (!res || !res.success) throw new Error((res && res.error) || 'Gagal mengambil data');
+      ingest(res);
+      notifyLoaded(res);
+    })
+    .catch((err) => toast('error', String((err && err.message) || err), 6000))
+    .finally(() => { S.loading = null; hideLoading(); });
+  return S.loading;
+}
+
+/** Simpan respons server ke state lalu gambar ulang dashboard. */
+function ingest(res) {
+  S.cols = res.columns || [];
+  S.padam = res.padam || null;
+  S.ulps = res.ulps || [];
+  S.rows = res.data || [];
+  S.sorek = res.sorek || null;
+  S.menunggak = res.menunggak || null;
+  S.loaded = true;
+  setupFilters();
+  fillSorekMonths();
+  applyFilter(false);
+}
+
+function notifyLoaded(res) {
+  if (res.hint) toast('warning', 'Struktur sheet perlu diperbarui: ' + res.hint, 9000);
+  else if (res.missing && res.missing.length) toast('warning', 'Kolom tidak ditemukan di sheet: ' + res.missing.join(', '), 7000);
+  else toast('success', `${fmt(S.rows.length)} data pelanggan dimuat`);
+}
+
+/** ULP sesuai urutan di CONFIG, ditambah ULP lain yang muncul di data (jika ada salah ketik). */
+function ulpOptions() {
+  const extra = uniq(S.rows.map((r) => r.ulp)).filter((u) => !S.ulps.includes(u));
+  return S.ulps.concat(extra);
+}
+
+/* ═══════════════════ FILTER ═══════════════════ */
+function fillSelect(id, items, allLabel) {
+  const el = $(id), current = el.value;
+  el.innerHTML = `<option value="">-- ${allLabel} --</option>` + items.map((v) => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  if (items.includes(current)) el.value = current;
+}
+function fillDatalist(id, items) { $(id).innerHTML = items.map((v) => `<option value="${esc(v)}"></option>`).join(''); }
+
+function setupFilters() {
+  fillSelect('f-ulp', ulpOptions(), 'SEMUA ULP');
+  fillSelect('f-kategori', uniq(S.rows.map((r) => r.kategori)), 'SEMUA KATEGORI');
+  fillDatalist('dl-segmentasi', uniq(S.rows.map((r) => r.segmentasi)));
+  refreshPenyulang();
+}
+
+function refreshPenyulang() {
+  const ulp = $('f-ulp').value;
+  fillDatalist('dl-penyulang', uniq(S.rows.filter((r) => !ulp || r.ulp === ulp).map((r) => r.supply_utama)));
+}
+
+function filteredRows() {
+  const ulp = $('f-ulp').value, kat = $('f-kategori').value;
+  const seg = $('f-segmentasi').value.trim().toLowerCase();
+  const pen = $('f-penyulang').value.trim().toLowerCase();
+  return S.rows.filter((r) =>
+    (!ulp || r.ulp === ulp) &&
+    (!kat || r.kategori === kat) &&
+    (!seg || String(r.segmentasi ?? '').toLowerCase().includes(seg)) &&
+    (!pen || String(r.supply_utama ?? '').toLowerCase().includes(pen)));
+}
+
+function applyFilter(notify = true) {
+  S.view = filteredRows();
+  S.appliedUlp = $('f-ulp').value;
+  $('search-prioritas').value = '';
+  $('kpi-ulp').textContent = fmt(countDistinct(S.view, 'ulp'));
+  $('kpi-total').textContent = fmt(S.view.length);
+  $('kpi-segmen').textContent = fmt(countDistinct(S.view, 'segmentasi'));
+  $('kpi-penyulang').textContent = fmt(countDistinct(S.view, 'supply_utama'));
+  renderTable(S.view);
+  renderCharts(S.view);
+  renderSorek();
+  renderMenunggak();
+  if (notify) toast('success', `${fmt(S.view.length)} data ditemukan`);
+}
+
+function resetFilter() {
+  ['f-ulp', 'f-kategori', 'f-segmentasi', 'f-penyulang'].forEach((id) => { $(id).value = ''; });
+  refreshPenyulang();
+  applyFilter(false);
+}
+
+/* ═══════════════════ TABLE ═══════════════════ */
+function cellHtml(key, v) {
+  const val = esc(v);
+  if (/^padam_\d{2}$/.test(key)) return Number(v) ? `<td class="num fw-bold text-primary">${val}</td>` : `<td class="num text-muted">${val}</td>`;
+  if (key === 'padam_total') return `<td class="total">${val}</td>`;
+  if (key === 'koordinat' && String(v ?? '').trim()) {
+    const q = encodeURIComponent(String(v).trim());
+    return `<td><a class="map-link" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener" title="Buka di Google Maps"><i class="fas fa-location-dot me-1"></i>${val}</a></td>`;
+  }
+  if (key === 'kondisi_genset' && val) {
+    const bad = /RUSAK|TIDAK/i.test(v);
+    return `<td><span class="badge rounded-pill px-3 py-1 ${bad ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'}">${val}</span></td>`;
+  }
+  if (key === 'alamat') return `<td class="wrap">${val}</td>`;
+  if (key === 'nama_vip') return `<td class="fw-bold">${val}</td>`;
+  return `<td>${val}</td>`;
+}
+
+function renderTable(rows) {
+  $('head-prioritas').innerHTML = S.cols.map((c) => `<th>${esc(c.label)}</th>`).join('');
+  $('body-prioritas').innerHTML = rows.length
+    ? rows.map((r) => '<tr>' + S.cols.map((c) => cellHtml(c.key, r[c.key])).join('') + '</tr>').join('')
+    : `<tr><td colspan="${S.cols.length || 1}" class="text-center text-muted py-5">Data tidak ditemukan.</td></tr>`;
+  $('count-prioritas').textContent = `${fmt(rows.length)} baris`;
+}
+
+const searchPrioritas = debounce(() => {
+  if (!S.view.length) return;
+  const q = $('search-prioritas').value.trim().toLowerCase();
+  const body = $('body-prioritas');
+  let shown = 0;
+  body.style.display = 'none';
+  for (const tr of body.rows) {
+    const hit = !q || tr.textContent.toLowerCase().includes(q);
+    tr.style.display = hit ? '' : 'none';
+    if (hit) shown++;
+  }
+  body.style.display = '';
+  $('count-prioritas').textContent = q ? `${fmt(shown)} dari ${fmt(body.rows.length)} baris` : `${fmt(body.rows.length)} baris`;
+}, 250);
+
+/* ═══════════════════ CHARTS ═══════════════════ */
+const BLUE = '#00A3E1', GOLD = '#FFD100', GREY = '#94A3B8';
+const PALETTE = ['#021B79', '#00A3E1', '#FFD100', '#10B981', '#EF4444', '#6366F1', '#F59E0B', '#8B5CF6', '#0EA5E9', '#EC4899', '#14B8A6', '#84CC16', '#F97316', '#64748B'];
+const PIE_LABEL_MIN = 0.03;   // irisan < 3% tidak diberi label (tetap terlihat di tooltip)
+const PIE_TOP_PENYULANG = 7;  // saat satu ULP dipilih: 7 penyulang teratas + LAINNYA
+const shortLabel = (s, n = 14) => (String(s).length > n ? String(s).slice(0, n - 1) + '…' : String(s));
+
+const pieConnector = {
+  id: 'pieConnector',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    const ds = chart.data.datasets[0];
+    const total = ds.data.reduce((a, b) => a + b, 0) || 1;
+    chart.getDatasetMeta(0).data.forEach((arc, i) => {
+      if (ds.data[i] / total < PIE_LABEL_MIN) return;
+      const angle = arc.startAngle + (arc.endAngle - arc.startAngle) / 2;
+      const r1 = arc.outerRadius, r2 = arc.outerRadius + 14;
+      ctx.save();
+      ctx.beginPath();
+      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = '#94a3b8';
+      ctx.moveTo(arc.x + Math.cos(angle) * r1, arc.y + Math.sin(angle) * r1);
+      ctx.lineTo(arc.x + Math.cos(angle) * r2, arc.y + Math.sin(angle) * r2);
+      ctx.stroke();
+      ctx.restore();
+    });
+  },
+};
+
+/** Semua ULP → sebaran per ULP. Satu ULP dipilih → sebaran per penyulang di ULP itu. */
+function pieData(rows) {
+  const oneUlp = $('f-ulp').value;
+  if (!oneUlp) {
+    const order = ulpOptions();
+    const m = countBy(rows, 'ulp');
+    const items = order.filter((u) => m[u]).map((u) => [u, m[u]]);
+    return { title: 'Sebaran ULP', sub: 'Wilayah Kerja', items, colors: items.map(([u]) => PALETTE[order.indexOf(u) % PALETTE.length]) };
+  }
+  const sorted = Object.entries(countBy(rows, 'supply_utama')).sort((a, b) => b[1] - a[1]);
+  const items = sorted.slice(0, PIE_TOP_PENYULANG);
+  const rest = sorted.slice(PIE_TOP_PENYULANG).reduce((s, e) => s + e[1], 0);
+  if (rest) items.push(['LAINNYA', rest]);
+  return { title: 'Sebaran Penyulang', sub: 'ULP ' + oneUlp, items, colors: items.map(([k], i) => (k === 'LAINNYA' ? GREY : PALETTE[i % PALETTE.length])) };
+}
+
+function renderCharts(rows) {
+  if (typeof Chart === 'undefined') return;
+  Object.values(S.charts).forEach((c) => c && c.destroy());
+  S.charts = {};
+  Chart.defaults.font.family = "'Poppins', sans-serif";
+  Chart.defaults.color = '#64748b';
+  const tick = { size: 11, weight: '600' };
+  const DL = window.ChartDataLabels ? [ChartDataLabels] : [];
+
+  // 1. Frekuensi padam per bulan pada tahun rekap (+ SAIFI di tooltip)
+  const valid = rows.filter((r) => String(r.nama_vip ?? '').trim());
+  const nPlg = valid.length || 1;
+  const P = S.padam;
+  const now = new Date();
+  const lastMonth = !P ? 0 : P.year < now.getFullYear() ? 12 : P.year > now.getFullYear() ? 0 : now.getMonth() + 1;
+  const monthData = P ? P.keys.map((k, i) => (i < lastMonth ? valid.reduce((s, r) => s + (Number(r[k]) || 0), 0) : null)) : [];
+  const padamTotal = monthData.reduce((s, v) => s + (v || 0), 0);
+  $('padam-title').textContent = P ? `Frekuensi Padam ${P.year}` : 'Frekuensi Padam';
+  $('padam-sub').textContent = P ? `Kejadian per bulan · total ${fmt(padamTotal)}` : 'Perbarui Apps Script untuk data per bulan';
+  S.charts.line = new Chart($('chart-line'), {
+    type: 'line',
+    plugins: DL,
+    data: {
+      labels: P ? P.months.map((m) => m.charAt(0) + m.slice(1).toLowerCase()) : [],
+      datasets: [{ label: 'Kejadian', data: monthData, borderColor: BLUE, backgroundColor: 'rgba(0,163,225,.12)', pointBackgroundColor: BLUE, fill: true, tension: 0.35, cubicInterpolationMode: 'monotone', pointRadius: 4, spanGaps: false }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, layout: { padding: { top: 22 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: {
+          title: (items) => `${P.months[items[0].dataIndex]} ${P.year}`,
+          label: (c) => [` Kejadian: ${fmt(c.parsed.y)}`, ` SAIFI: ${(c.parsed.y / nPlg).toFixed(4)}`],
+        } },
+        datalabels: { display: (c) => !!c.dataset.data[c.dataIndex], anchor: 'end', align: 'top', color: '#334155', font: { size: 10, weight: 'bold' }, formatter: (v) => fmt(v) },
+      },
+      scales: {
+        y: { beginAtZero: true, grace: '15%', ticks: { font: tick, precision: 0 } },
+        x: { ticks: { font: { size: 10, weight: '600' }, maxRotation: 0, autoSkip: true, autoSkipPadding: 2 }, grid: { display: false } },
+      },
+    },
+  });
+
+  // 2. Jumlah per kategori
+  const kat = Object.entries(countBy(rows, 'kategori')).sort((a, b) => naturalSort(a[0], b[0]));
+  S.charts.kategori = new Chart($('chart-kategori'), {
+    type: 'bar',
+    plugins: DL,
+    data: { labels: kat.map((k) => k[0].replace(/^KATEGORI\s*/i, 'KAT ')), datasets: [{ label: 'Jumlah', data: kat.map((k) => k[1]), backgroundColor: GOLD, borderRadius: 5 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, layout: { padding: { top: 20 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { title: (items) => kat[items[0].dataIndex][0] } },
+        datalabels: { anchor: 'end', align: 'top', color: '#334155', font: { weight: 'bold' }, formatter: (v) => fmt(v) },
+      },
+      scales: { x: { ticks: { font: tick }, grid: { display: false } }, y: { beginAtZero: true, grace: '10%', ticks: { precision: 0 } } },
+    },
+  });
+
+  // 3. Sebaran ULP / penyulang
+  const pie = pieData(rows);
+  $('pie-title').textContent = pie.title;
+  $('pie-sub').textContent = pie.sub;
+  const pieTotal = pie.items.reduce((s, e) => s + e[1], 0) || 1;
+  S.charts.pie = new Chart($('chart-pie'), {
+    type: 'pie',
+    plugins: [...DL, pieConnector],
+    data: {
+      labels: pie.items.map((p) => p[0]),
+      datasets: [{ data: pie.items.map((p) => p[1]), backgroundColor: pie.colors, borderColor: '#fff', borderWidth: 2 }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, layout: { padding: 38 },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (c) => ` ${c.label}: ${fmt(c.parsed)} (${((c.parsed / pieTotal) * 100).toFixed(1)}%)` } },
+        datalabels: {
+          display: (c) => c.dataset.data[c.dataIndex] / pieTotal >= PIE_LABEL_MIN,
+          anchor: 'end', align: 'end', offset: 4, color: '#334155', textAlign: 'center',
+          font: { size: 9, weight: 'bold' },
+          formatter: (v, c) => shortLabel(c.chart.data.labels[c.dataIndex], 12) + '\n' + fmt(v),
+        },
+      },
+    },
+  });
+
+  // 4. Sebaran segmentasi (horizontal, tinggi menyesuaikan jumlah segmen)
+  const seg = Object.entries(countBy(rows, 'segmentasi')).sort((a, b) => b[1] - a[1]);
+  $('bar-holder').style.height = Math.max(250, seg.length * 30) + 'px';
+  S.charts.segmen = new Chart($('chart-segmen'), {
+    type: 'bar',
+    plugins: DL,
+    data: { labels: seg.map((s) => s[0]), datasets: [{ data: seg.map((s) => s[1]), backgroundColor: BLUE, borderRadius: 5, maxBarThickness: 18 }] },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false, layout: { padding: { right: 34 } },
+      plugins: {
+        legend: { display: false },
+        datalabels: { anchor: 'end', align: 'right', color: '#334155', font: { weight: 'bold' }, formatter: (v) => fmt(v) },
+      },
+      scales: { x: { display: false, beginAtZero: true }, y: { ticks: { font: { size: 10, weight: '600' }, callback(v) { return shortLabel(this.getLabelForValue(v), 16); } }, grid: { display: false } } },
+    },
+  });
+}
+
+/* ═══════════════════ SOREK ═══════════════════ */
+const NAMA_BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+const bulanLabel = (thbl) => `${NAMA_BULAN[Number(String(thbl).slice(4, 6)) - 1] || '?'} ${String(thbl).slice(0, 4)}`;
+const rupiah = (n) => 'Rp ' + Math.round(Number(n || 0)).toLocaleString('id-ID');
+const rupiahSingkat = (n) => {
+  const a = Math.abs(Number(n || 0));
+  if (a >= 1e9) return 'Rp ' + (n / 1e9).toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ' M';
+  if (a >= 1e6) return 'Rp ' + (n / 1e6).toLocaleString('id-ID', { maximumFractionDigits: 1 }) + ' jt';
+  return rupiah(n);
+};
+
+function sorekRows() {
+  const s = S.sorek;
+  if (!s || !Array.isArray(s.rows)) return [];
+  if (!S.sorekObjs || S.sorekObjs.src !== s) {
+    const f = s.fields || [];
+    S.sorekObjs = { src: s, list: s.rows.map((r) => { const o = {}; f.forEach((k, i) => { o[k] = r[i]; }); return o; }) };
+  }
+  return S.sorekObjs.list;
+}
+
+function fillSorekMonths() {
+  const el = $('f-sorek-bulan'), current = el.value;
+  const months = ((S.sorek && S.sorek.months) || []).slice().sort().reverse();
+  el.innerHTML = months.length
+    ? months.map((m) => `<option value="${esc(m)}">${esc(bulanLabel(m))}</option>`).join('')
+    : '<option value="">Belum ada data SOREK</option>';
+  el.disabled = !months.length;
+  // Ikuti bulan terbaru, kecuali pengguna sudah memilih bulan lain sendiri
+  if (el.dataset.dipilih === '1' && months.includes(current)) el.value = current;
+}
+
+function rankHtml(list, key, fmtVal, color, prio) {
+  const max = (list[0] && list[0][key]) || 1;
+  return list.map((r, i) => `
+    <li class="rank-item">
+      <span class="rank-no">${i + 1}</span>
+      <div class="rank-body">
+        <div class="rank-top">
+          <span class="rank-name" title="${esc(r.nama)} · IDPEL ${esc(r.idpel)}">${esc(r.nama || r.idpel)}</span>
+          ${prio.has(r.idpel) ? '<i class="fas fa-crown rank-prio" title="Pelanggan prioritas"></i>' : ''}
+          <span class="rank-val" title="${esc(fmtVal.full(r[key]))}">${esc(fmtVal.short(r[key]))}</span>
+        </div>
+        <div class="rank-meta">${esc(r.ulp)} · ${esc(r.tarif)}/${esc(fmt(r.daya))} VA · ${esc(r.idpel)}</div>
+        <div class="rank-bar"><div style="width:${Math.max(2, (r[key] / max) * 100).toFixed(1)}%;background:${color}"></div></div>
+      </div>
+    </li>`).join('');
+}
+
+function renderSorek() {
+  const month = $('f-sorek-bulan').value;
+  const checked = document.querySelector('input[name="sorek-scope"]:checked');
+  const scope = checked ? checked.value : 'all';
+  const ulp = S.appliedUlp;
+  const all = sorekRows();
+  const prioAll = new Set(S.rows.map((r) => String(r.idpel ?? '').trim()).filter(Boolean));
+  const prioView = new Set(S.view.map((r) => String(r.idpel ?? '').trim()).filter(Boolean));
+
+  let rows = all.filter((r) => r.thbl === month && (!ulp || r.ulp === ulp));
+  if (scope === 'prio') rows = rows.filter((r) => prioView.has(r.idpel));
+
+  $('sorek-note').textContent = scope === 'prio'
+    ? 'Pelanggan prioritas · mengikuti semua filter di atas'
+    : (ulp ? `ULP ${ulp} · dari filter di atas` : 'Semua ULP · hanya filter ULP yang berlaku');
+  const sub = month ? `${bulanLabel(month)} · ${ulp ? 'ULP ' + ulp : 'semua ULP'}` : '';
+  $('kwh-sub').textContent = sub || 'Pemakaian kWh';
+  $('rpptl-sub').textContent = sub || 'Pendapatan RPPTL';
+
+  const empty = (msg) => `<li class="empty-state"><i class="fas fa-file-circle-question"></i>${esc(msg)}</li>`;
+  if (!all.length) {
+    const msg = (S.sorek && S.sorek.note) || 'Data SOREK belum tersedia.';
+    $('top-kwh').innerHTML = empty(msg);
+    $('top-rpptl').innerHTML = empty(msg);
+    return;
+  }
+  if (!rows.length) {
+    const msg = scope === 'prio' ? 'Tidak ada pelanggan prioritas di SOREK untuk pilihan ini.' : 'Tidak ada data SOREK untuk pilihan ini.';
+    $('top-kwh').innerHTML = empty(msg);
+    $('top-rpptl').innerHTML = empty(msg);
+    return;
+  }
+  const top = (k) => rows.slice().sort((a, b) => b[k] - a[k] || (a.idpel < b.idpel ? -1 : 1)).slice(0, 10);
+  const kwhFmt = { short: (v) => `${fmt(v)} kWh`, full: (v) => `${fmt(v)} kWh` };
+  $('top-kwh').innerHTML = rankHtml(top('kwh'), 'kwh', kwhFmt, BLUE, prioAll);
+  $('top-rpptl').innerHTML = rankHtml(top('rpptl'), 'rpptl', { short: rupiahSingkat, full: rupiah }, '#10B981', prioAll);
+}
+
+/* ═══════════════════ HISTORY MENUNGGAK ═══════════════════ */
+const BLN_PENDEK = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+const tglLabel = (t, withYear = true) => (t ? `${Number(String(t).slice(6, 8))} ${BLN_PENDEK[Number(String(t).slice(4, 6)) - 1] || '?'}${withYear ? ' ' + String(t).slice(0, 4) : ''}` : '-');
+
+/** 10 pelanggan prioritas (sesuai filter) dengan pelunasan tgl 21–31 terbanyak. */
+function renderMenunggak() {
+  const M = S.menunggak;
+  const list = $('top-telat');
+  const note = $('telat-note');
+  const empty = (msg) => `<li class="empty-state"><i class="fas fa-file-circle-question"></i>${esc(msg)}</li>`;
+  note.textContent = '';
+  if (!M || !Array.isArray(M.rows)) {
+    $('telat-sub').textContent = 'Pelunasan tanggal 21–31';
+    list.innerHTML = empty('Perbarui Apps Script untuk data history pelunasan.');
+    return;
+  }
+  const mulai = M.mulaiTanggal || 21;
+  $('telat-sub').textContent = M.dari ? `Pelunasan tgl ${mulai}–31 · ${tglLabel(M.dari, M.dari.slice(0, 4) !== M.sampai.slice(0, 4))} – ${tglLabel(M.sampai)}` : `Pelunasan tanggal ${mulai}–31`;
+  if (!M.rows.length && M.note) { list.innerHTML = empty(M.note); return; }
+
+  const byId = {};
+  M.rows.forEach((r) => { byId[r[0]] = { kali: r[1], bulan: r[2], terakhir: r[3] }; });
+  const seen = {};
+  const rows = [];
+  S.view.forEach((p) => {
+    const id = String(p.idpel ?? '').trim();
+    if (!id || seen[id] || !byId[id]) return;
+    seen[id] = true;
+    rows.push(Object.assign({ idpel: id, nama: p.nama_vip, ulp: p.ulp }, byId[id]));
+  });
+  if (!rows.length) { list.innerHTML = empty('Tidak ada pelanggan prioritas dengan pelunasan tanggal 21–31 untuk filter ini.'); return; }
+
+  rows.sort((a, b) => b.kali - a.kali || b.bulan - a.bulan || (a.terakhir < b.terakhir ? 1 : a.terakhir > b.terakhir ? -1 : 0) || (a.idpel < b.idpel ? -1 : 1));
+  const top = rows.slice(0, 10);
+  const max = top[0].kali || 1;
+  list.innerHTML = top.map((r) => {
+    const rank = rows.findIndex((x) => x.kali === r.kali) + 1;   // peringkat sama untuk jumlah yang sama
+    return `
+    <li class="rank-item">
+      <span class="rank-no${rank <= 3 ? ' top' : ''}">${rank}</span>
+      <div class="rank-body">
+        <div class="rank-top">
+          <span class="rank-name" title="${esc(r.nama)} · IDPEL ${esc(r.idpel)}">${esc(r.nama || r.idpel)}</span>
+          <span class="rank-val" title="${esc(r.kali)} kali pelunasan pada tanggal ${mulai}–31">${esc(r.kali)}×</span>
+        </div>
+        <div class="rank-meta">${esc(r.ulp)} · ${esc(r.bulan)} bulan · terakhir ${esc(tglLabel(r.terakhir, false))} · ${esc(r.idpel)}</div>
+        <div class="rank-bar"><div style="width:${Math.max(2, (r.kali / max) * 100).toFixed(1)}%;background:#EF4444"></div></div>
+      </div>
+    </li>`;
+  }).join('');
+  const last = top[top.length - 1].kali;
+  const lebih = rows.slice(10).filter((x) => x.kali === last).length;
+  note.textContent = lebih ? `+${lebih} pelanggan lain juga ${last}× (peringkat sama, tidak ditampilkan).` : '';
+}
+
+/* ═══════════════════ NPS ═══════════════════ */
+// Sumber: spreadsheet kinerja (lihat CONFIG.NPS_* di Code.gs). Setiap sheet tahun berjalan = satu sub-menu,
+// setiap bagian di sheet (judul + blok TARGET/REALISASI/PERSENTASI per unit) = satu kartu.
+const NPS_BLN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+const NPS_KPI_BG = ['bg-gradient-ulp', 'bg-gradient-plg', 'bg-gradient-seg', 'bg-gradient-blue'];
+const NPS_GOOD = '#10B981', NPS_BAD = '#EF4444', NPS_TARGET = '#F59E0B', NAVY = '#125D72';
+
+const npsKind = (m) => (/PERSENTASE|PERSENTASI|%/.test(m) ? 'pct' : /^(TARGET|BOBOT)/.test(m) ? 'target' : 'real');
+const npsStatus = (v) => (v == null ? 'na' : Math.round(v * 100) / 100 >= 100 ? 'good' : 'bad');   // sama dengan angka yang tampil (2 desimal)
+const npsPct = (v) => (v == null ? '–' : v.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%');
+function npsNum(v, full) {
+  if (v == null) return '–';
+  const a = Math.abs(v);
+  if (!full && a >= 1e9) return (v / 1e9).toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ' M';
+  if (!full && a >= 1e6) return (v / 1e6).toLocaleString('id-ID', { maximumFractionDigits: 1 }) + ' jt';
+  const dec = !Number.isInteger(v) && a < 100 ? 2 : 0;
+  return v.toLocaleString('id-ID', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+/**
+ * "PERCEPATAN CASH IN - 2026" → "Percepatan Cash In", "PENJUALAN GWH 2026 (1)" → "Penjualan GWh",
+ * "KINERJA PENJUALAN UP3 TAHUNA TAHUN 2026" → "Kinerja Penjualan". Judul yang sudah huruf campuran dibiarkan.
+ */
+const NPS_WORDS = { pln: 'PLN', up3: 'UP3', ulp: 'ULP', prr: 'PRR', aga: 'AGA', pp: 'PP', nps: 'NPS', gwh: 'GWh', kwh: 'kWh', mva: 'MVA' };
+function npsTitle(s) {
+  const t = String(s || '')
+    .replace(/\s*\(\d+\)\s*$/, '')
+    .replace(/\s*[-–—]?\s*(TAHUN\s+)?\d{4}\s*$/i, '')
+    .replace(/\s+UP3\s+TAHUNA\s*$/i, '')
+    .trim();
+  if (t !== t.toUpperCase()) return t;
+  return t.toLowerCase().replace(/[a-z0-9]+/g, (w) => NPS_WORDS[w] || w.charAt(0).toUpperCase() + w.slice(1));
+}
+function npsIcon(name) {
+  const n = String(name).toUpperCase();
+  return /CASH/.test(n) ? 'fa-money-bill-wave' : /MOBILE/.test(n) ? 'fa-mobile-screen-button'
+    : /LISDES/.test(n) ? 'fa-house-chimney' : /MVA|PENYAMBUNGAN/.test(n) ? 'fa-plug'
+    : /PELANGGAN/.test(n) ? 'fa-user-plus'
+    : /PENDAPATAN|PENYAMBUNGAN/.test(n) ? 'fa-coins' : /GWH|KWH|PENJUALAN/.test(n) ? 'fa-bolt' : 'fa-file-lines';
+}
+
+function loadNps() {
+  if (S.npsLoading) return S.npsLoading;
+  S.npsLoading = gas('getNpsData')
+    .then((res) => {
+      if (!res || !res.success) throw new Error((res && res.error) || 'Gagal mengambil data NPS');
+      ingestNps(res);
+    })
+    .catch((err) => npsLoadFailed(String((err && err.message) || err)))
+    .finally(() => { S.npsLoading = null; });
+  return S.npsLoading;
+}
+
+function npsLoadFailed(msg) {
+  if (S.nps) { toast('warning', 'Data NPS gagal diperbarui, menampilkan data tersimpan. ' + msg, 7000); return; }
+  S.npsError = msg;
+  buildNpsMenu();
+  if (S.page === 'nps') renderNps();
+}
+
+/** Peran baris per bagian: target utama, realisasi utama (baris terakhir sebelum PERSENTASI), persen. */
+function npsPrepare(res) {
+  const now = new Date();
+  res.sheets.forEach((sh) => {
+    sh.sections.forEach((s) => {
+      const pct = s.metrics.find((m) => npsKind(m) === 'pct') || null;
+      const before = pct ? s.metrics.slice(0, s.metrics.indexOf(pct)) : s.metrics;
+      const real = before.filter((m) => npsKind(m) === 'real').pop() || s.metrics.filter((m) => npsKind(m) === 'real').pop() || null;
+      // Target pasangan realisasi: yang paling banyak berbagi kata (KUMULATIF ↔ KUMULATIF, DELTA ↔ DELTA), selain itu yang pertama
+      const words = (m) => String(m).split(/[^A-Z0-9]+/).filter((w) => w && !/^(TARGET|REALISASI|BOBOT)$/.test(w));
+      const targets = s.metrics.filter((m) => npsKind(m) === 'target');
+      let target = targets[0] || null, best = 0;
+      if (real) targets.forEach((t) => { const n = words(t).filter((w) => words(real).includes(w)).length; if (n > best) { best = n; target = t; } });
+      s.roles = { pct, target, real };
+    });
+    // Bulan data terbaru: bagian yang realisasinya belum penuh setahun menentukan posisi bulan.
+    const last = sh.sections.map((s) => s.lastMonth).filter((v) => v != null);
+    const partial = last.filter((v) => v < 11);
+    sh.dataMonth = partial.length ? Math.max(...partial) : last.length ? Math.max(...last)
+      : res.year < now.getFullYear() ? 11 : res.year > now.getFullYear() ? 0 : now.getMonth();
+    const labels = {};
+    sh.sections.forEach((s) => s.units.forEach((u) => { if (!labels[u.key]) labels[u.key] = u; }));
+    const order = (k) => (labels[k].total ? -1 : (res.ulps || []).indexOf(k) >= 0 ? (res.ulps || []).indexOf(k) : 99);
+    sh.unitKeys = Object.keys(labels).sort((a, b) => order(a) - order(b));
+    sh.unitLabels = Object.fromEntries(Object.entries(labels).map(([k, u]) => [k, u.label]));
+  });
+}
+
+function ingestNps(res) {
+  if (!Array.isArray(res.sheets)) throw new Error('Perbarui Apps Script (deploy versi baru) untuk menampilkan menu NPS.');
+  npsPrepare(res);
+  S.nps = res;
+  S.npsError = '';
+  if (res.errors && res.errors.length) toast('warning', 'Sebagian spreadsheet NPS gagal dibaca. ' + res.errors.join(' '), 8000);
+  res.sheets.forEach((sh) => {
+    const sel = S.npsSel[sh.name];
+    if (sel && (sel.auto || sel.month > sh.dataMonth)) { sel.month = sh.dataMonth; sel.auto = true; }
+  });
+  if (S.npsSheet >= res.sheets.length) S.npsSheet = 0;
+  buildNpsMenu();
+  if (S.page === 'nps') renderNps();
+}
+
+function npsSel(sh) {
+  sh = sh || (S.nps && S.nps.sheets[S.npsSheet]);
+  if (!sh) return {};
+  return S.npsSel[sh.name] || (S.npsSel[sh.name] = { month: sh.dataMonth, unit: 'UP3', auto: true });
+}
+
+function buildNpsMenu() {
+  const ul = $('nps-submenu');
+  if (!S.nps) {
+    ul.innerHTML = S.npsError
+      ? '<li class="sub-note">Gagal memuat. <button type="button" class="sub-retry" data-action="nps-retry">Coba lagi</button></li>'
+      : '<li class="sub-note">Memuat…</li>';
+    return;
+  }
+  ul.innerHTML = S.nps.sheets.length
+    ? S.nps.sheets.map((sh, i) => `<li><a href="#" data-page="nps" data-sheet="${i}" title="${esc(sh.name)}"><i class="fas ${npsIcon(sh.name)}"></i><span>${esc(npsTitle(sh.name))}</span></a></li>`).join('')
+    : `<li class="sub-note">Belum ada sheet ${esc(S.nps.year)}.</li>`;
+  markActiveMenu();
+}
+
+function npsDestroyCharts() {
+  Object.values(S.npsCharts).forEach((c) => c && c.destroy());
+  S.npsCharts = {};
+}
+
+function renderNpsState(html) {
+  npsDestroyCharts();
+  $('nps-kpis').innerHTML = '';
+  $('nps-source').textContent = '';
+  ['nps-bulan', 'nps-unit'].forEach((id) => { $(id).innerHTML = ''; $(id).disabled = true; });
+  $('nps-sections').innerHTML = `<div class="data-card p-5 text-center">${html}</div>`;
+}
+
+function renderNps() {
+  if (!S.nps) {
+    renderNpsState(S.npsError
+      ? `<div class="text-danger fw-bold mb-2"><i class="fas fa-triangle-exclamation me-2"></i>Data NPS gagal dimuat</div>
+         <div class="text-muted small mb-3">${esc(S.npsError)}</div>
+         <button class="btn btn-primary btn-sm rounded-12 px-4" type="button" onclick="loadNps()"><i class="fas fa-rotate me-2"></i>Coba lagi</button>`
+      : '<div class="spinner-border text-primary mb-3" role="status"></div><div class="fw-600 text-muted">Memuat data NPS…</div>');
+    return;
+  }
+  const sh = S.nps.sheets[S.npsSheet];
+  if (!sh) {
+    renderNpsState(`<div class="fw-bold text-dark mb-1">Belum ada sheet ${esc(S.nps.year)}</div><div class="text-muted small">Tambahkan sheet dengan "${esc(S.nps.year)}" di namanya pada spreadsheet NPS.</div>`);
+    return;
+  }
+  const sel = npsSel(sh);
+  if (!sh.unitKeys.includes(sel.unit)) sel.unit = sh.unitKeys[0];
+  const year = S.nps.year;
+
+  const mSel = $('nps-bulan');
+  mSel.disabled = false;
+  mSel.innerHTML = NAMA_BULAN.slice(0, sh.dataMonth + 1).map((n, i) => `<option value="${i}">Posisi ${n} ${year}</option>`).reverse().join('');
+  mSel.value = String(sel.month);
+  const uSel = $('nps-unit');
+  uSel.disabled = false;
+  uSel.innerHTML = sh.unitKeys.map((k) => `<option value="${esc(k)}">${esc(sh.unitLabels[k])}${k === 'UP3' ? ' (total)' : ''}</option>`).join('');
+  uSel.value = sel.unit;
+  $('nps-source').innerHTML = `<i class="fas fa-table me-1"></i>${esc(sh.source || S.nps.source || 'Spreadsheet NPS')} · data s.d. ${esc(NAMA_BULAN[sh.dataMonth])} ${esc(year)}`;
+  $('page-title').textContent = pageTitle('nps').toUpperCase();
+
+  const views = sh.sections.map((s, i) => npsView(s, sel, i));
+  const xl = views.length <= 2 ? 6 : views.length === 3 ? 4 : 3;
+  // Sheet dengan satu bagian: kartu ringkasan tidak perlu (angkanya sudah ada di kartu bagian)
+  $('nps-kpis').innerHTML = views.length > 1 ? views.map((v) => npsKpiHtml(v, xl)).join('') : '';
+  $('nps-kpis').classList.toggle('d-none', views.length <= 1);
+  $('nps-sections').innerHTML = views.map(npsSectionHtml).join('');
+  npsDestroyCharts();
+  views.forEach(npsDrawCharts);
+}
+
+/** Nilai satu bagian untuk unit & bulan terpilih. Bagian yang realisasinya berhenti lebih awal memakai bulan terakhirnya. */
+function npsView(s, sel, i) {
+  const eff = s.lastMonth != null && s.lastMonth < sel.month ? s.lastMonth : sel.month;
+  const unit = s.units.find((u) => u.key === sel.unit) || s.units.find((u) => u.total) || s.units[0];
+  const get = (u, m, mo) => (u && m && u.data[m] && u.data[m][mo] != null ? u.data[m][mo] : null);
+  const r = s.roles;
+  return { i, s, unit, eff, month: sel.month, stale: eff < sel.month, get, target: get(unit, r.target, eff), real: get(unit, r.real, eff), pct: get(unit, r.pct, eff) };
+}
+
+function npsKpiHtml(v, xl) {
+  const r = v.s.roles;
+  const st = r.pct ? npsStatus(v.pct) : 'na';
+  const value = r.pct ? npsPct(v.pct) : npsNum(v.real);
+  const sub = v.stale ? `Data terakhir ${NAMA_BULAN[v.eff]}`
+    : r.target && r.real ? `${npsNum(v.real)} dari ${npsTitle(r.target).toLowerCase()} ${npsNum(v.target)}` : v.unit.label;
+  const icon = st === 'good' ? 'fa-circle-check' : st === 'bad' ? 'fa-triangle-exclamation' : 'fa-chart-simple';
+  return `<div class="col-12 col-sm-6 col-xl-${xl}">
+    <div class="kpi-card nps-kpi ${NPS_KPI_BG[v.i % NPS_KPI_BG.length]}" data-sec="${v.i}" role="button" tabindex="0" title="Lihat rincian ${esc(npsTitle(v.s.title))}">
+      <div class="d-flex justify-content-between align-items-start gap-2">
+        <div class="kpi-label">${esc(npsTitle(v.s.title))}</div>
+        <span class="kpi-icon"><i class="fas ${icon}"></i></span>
+      </div>
+      <div class="kpi-value">${esc(value)}</div>
+      <div class="kpi-sub">${esc(v.unit.label)} · ${esc(sub)}</div>
+    </div>
+  </div>`;
+}
+
+function npsSectionHtml(v) {
+  const r = v.s.roles, year = S.nps.year, bln = `${NAMA_BULAN[v.eff]} ${year}`;
+  const stat = (lbl, val, full, cls) => `<div class="col-4"><div class="nps-stat" title="${esc(full)}"><div class="lbl">${esc(lbl)}</div><div class="val ${cls || ''}">${esc(val)}</div></div></div>`;
+  const stats = [
+    r.target ? stat(npsTitle(r.target), npsNum(v.target), npsNum(v.target, true)) : '',
+    r.real ? stat(npsTitle(r.real), npsNum(v.real), npsNum(v.real, true)) : '',
+    r.pct ? stat('Pencapaian', npsPct(v.pct), npsPct(v.pct), npsStatus(v.pct)) : '',
+  ].join('');
+  const metric = r.pct || r.real;
+  const nUnits = v.s.units.length;
+  const head = '<th>Unit</th>' + v.s.metrics.map((m) => `<th>${esc(m)}</th>`).join('');
+  const body = v.s.units.map((u) => `<tr class="${u.total ? 'total' : ''}${u.key === v.unit.key ? ' sel' : ''}"><td>${esc(u.label)}</td>${v.s.metrics.map((m) => {
+    const x = v.get(u, m, v.eff);
+    return npsKind(m) === 'pct' ? `<td><span class="nps-pill ${npsStatus(x)}">${esc(npsPct(x))}</span></td>` : `<td>${esc(npsNum(x, true))}</td>`;
+  }).join('')}</tr>`).join('');
+  return `<div class="chart-card mb-4 nps-section" id="nps-sec-${v.i}">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+      <div>
+        <h6 class="fw-800 text-uppercase text-muted mb-0 eyebrow">${esc(npsTitle(v.s.title))}</h6>
+        <small class="fw-600 text-primary">${esc(v.unit.label)} · posisi ${esc(bln)}</small>
+        ${v.stale ? `<div class="nps-stale"><i class="fas fa-circle-info me-1"></i>Realisasi bagian ini di sheet baru terisi s.d. ${esc(bln)}, jadi yang ditampilkan posisi ${esc(NAMA_BULAN[v.eff])}, bukan ${esc(NAMA_BULAN[v.month])}.</div>` : ''}
+      </div>
+      ${r.pct ? `<span class="nps-pill ${npsStatus(v.pct)}">${esc(npsPct(v.pct))}</span>` : ''}
+    </div>
+    <div class="row g-2 mb-3">${stats}</div>
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <div class="nps-sub-title">Tren bulanan · ${esc(v.unit.label)}</div>
+        <div class="chart-box"><canvas id="nps-trend-${v.i}"></canvas></div>
+      </div>
+      <div class="col-lg-5">
+        <div class="nps-sub-title">${esc(metric ? npsTitle(r.pct ? 'Pencapaian' : metric) : '')} per unit · ${esc(bln)}</div>
+        <div class="chart-box" style="height:${Math.max(200, nUnits * 26 + 24)}px"><canvas id="nps-ulp-${v.i}"></canvas></div>
+      </div>
+    </div>
+    <details class="nps-detail mt-2">
+      <summary><i class="fas fa-chevron-right me-1"></i> Rincian per unit · ${esc(bln)}</summary>
+      <div class="nps-table-wrap"><table class="table data-table nps-table mb-0"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
+    </details>
+  </div>`;
+}
+
+/** Garis putus-putus 100% di grafik pencapaian per unit. */
+const npsRefLine = {
+  id: 'npsRef',
+  afterDatasetsDraw(chart) {
+    const x = chart.scales.x;
+    if (!x) return;
+    const px = x.getPixelForValue(100);
+    if (px < chart.chartArea.left || px > chart.chartArea.right) return;
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(15,23,42,.35)';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(px, chart.chartArea.top); ctx.lineTo(px, chart.chartArea.bottom); ctx.stroke();
+    ctx.restore();
+  },
+};
+
+function npsDrawCharts(v) {
+  if (typeof Chart === 'undefined') return;
+  Chart.defaults.font.family = "'Poppins', sans-serif";
+  Chart.defaults.color = '#64748b';
+  const DL = window.ChartDataLabels ? [ChartDataLabels] : [];
+  const r = v.s.roles, year = S.nps.year;
+  const series = (m, upto) => NPS_BLN.map((_, i) => (i <= upto ? v.get(v.unit, m, i) : null));
+
+  // 1. Tren: target (sepanjang tahun), realisasi & pencapaian (s.d. bulan terpilih)
+  const ds = [];
+  if (r.target) ds.push({ label: npsTitle(r.target), data: series(r.target, 11), borderColor: NPS_TARGET, backgroundColor: NPS_TARGET, borderDash: [6, 4], borderWidth: 2, pointRadius: 0, tension: 0.25, yAxisID: 'y', order: 2 });
+  if (r.real) ds.push({ label: npsTitle(r.real), data: series(r.real, v.eff), borderColor: BLUE, backgroundColor: 'rgba(0,163,225,.12)', fill: true, borderWidth: 2.5, pointRadius: 3, pointBackgroundColor: BLUE, tension: 0.3, yAxisID: 'y', order: 1 });
+  if (r.pct) ds.push({ label: 'Pencapaian (%)', data: series(r.pct, v.eff), borderColor: NPS_GOOD, backgroundColor: NPS_GOOD, borderWidth: 2, pointRadius: 3, tension: 0.3, yAxisID: 'y1', order: 0 });
+  S.npsCharts['t' + v.i] = new Chart($('nps-trend-' + v.i), {
+    type: 'line',
+    plugins: DL,
+    data: { labels: NPS_BLN, datasets: ds },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+      layout: { padding: { top: 16 } },
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, font: { size: 10, weight: '600' }, sort: (a, b) => a.datasetIndex - b.datasetIndex } },
+        tooltip: { itemSort: (a, b) => a.datasetIndex - b.datasetIndex, callbacks: {
+          title: (it) => `${NAMA_BULAN[it[0].dataIndex]} ${year}`,
+          label: (c) => ` ${c.dataset.label}: ${c.dataset.yAxisID === 'y1' ? npsPct(c.parsed.y) : npsNum(c.parsed.y, true)}`,
+        } },
+        datalabels: {
+          display: (c) => c.dataset.yAxisID === 'y1' && c.dataIndex === v.eff && c.dataset.data[c.dataIndex] != null,
+          align: 'top', anchor: 'end', color: '#047857', font: { size: 10, weight: 'bold' }, formatter: (x) => npsPct(x),
+        },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10, weight: '600' }, maxRotation: 0, autoSkip: true, autoSkipPadding: 2 } },
+        y: { beginAtZero: true, grace: '8%', ticks: { font: { size: 10 }, callback: (x) => npsNum(x) } },
+        y1: { display: !!r.pct, position: 'right', beginAtZero: true, grace: '12%', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, callback: (x) => x.toLocaleString('id-ID') + '%' } },
+      },
+    },
+  });
+
+  // 2. Per unit pada bulan terpilih: UP3 di atas, ULP diurutkan dari pencapaian tertinggi
+  const metric = r.pct || r.real;
+  if (!metric) return;
+  const units = v.s.units.slice().sort((a, b) => (b.total - a.total) || ((v.get(b, metric, v.eff) ?? -Infinity) - (v.get(a, metric, v.eff) ?? -Infinity)));
+  const vals = units.map((u) => v.get(u, metric, v.eff));
+  const max = Math.max(0, ...vals.filter((x) => x != null));
+  S.npsCharts['u' + v.i] = new Chart($('nps-ulp-' + v.i), {
+    type: 'bar',
+    plugins: r.pct ? [...DL, npsRefLine] : DL,
+    data: {
+      labels: units.map((u) => (u.total ? u.label : u.key)),
+      datasets: [{ data: vals, borderRadius: 5, maxBarThickness: 18,
+        backgroundColor: units.map((u, k) => (u.total ? NAVY : !r.pct ? BLUE : npsStatus(vals[k]) === 'good' ? NPS_GOOD : NPS_BAD)) }],
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false, layout: { padding: { right: 62 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { title: (it) => units[it[0].dataIndex].label, label: (c) => ' ' + (r.pct ? npsPct(c.parsed.x) : npsNum(c.parsed.x, true)) } },
+        datalabels: {
+          display: (c) => c.dataset.data[c.dataIndex] != null,
+          anchor: 'end', align: 'right', color: '#334155', font: { size: 10, weight: 'bold' },
+          formatter: (x) => (r.pct ? npsPct(x) : npsNum(x)),
+        },
+      },
+      scales: {
+        x: { display: false, beginAtZero: true, suggestedMax: r.pct ? Math.max(110, max) : undefined },
+        y: { grid: { display: false }, ticks: { font: { size: 10, weight: '700' } } },
+      },
+    },
+  });
+}
+
+/* ═══════════════════ DAFTAR TUNGGU (GV_67) ═══════════════════ */
+// Data dari tab DAFTAR_TUNGGU lewat Apps Script. Bagian ini sama persis di index.html (GitHub) dan Index.html (Apps Script).
+const DT_CACHE_KEY = 'dpp-dt-v1';
+const DT_JENIS = [
+  { key: 'PB', name: 'Pasang Baru' },
+  { key: 'PD', name: 'Perubahan Daya', note: 'tanpa migrasi' },
+  { key: 'PDM', name: 'Migrasi', note: 'perubahan daya, tarif lama tanpa T ke tarif baru dengan T' },
+];
+const DT_HARI = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+const DT_HARI_PANJANG = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+const DT_BLN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+const DT_BLN_PANJANG = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+const DT = { res: null, rows: [], ulps: [], error: '', loading: null, status: 'tunggu', bulan: null, tmp: '', metric: 'pb', ulp: '', closed: {} };
+
+const dtFetch = () => (typeof fetchData === 'function' ? fetchData('daftar-tunggu') : gas('getDaftarTungguData'));
+const dtNama = (u) => String(u).toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase());
+const dtFmt = (n, dec = 0) => Number(n).toLocaleString('id-ID', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+// kVA dengan satu desimal; di dalam lingkaran kalender (ringkas) angka 100 kVA ke atas tanpa desimal.
+const dtKva = (va, ringkas) => dtFmt(va / 1000, ringkas && Math.abs(va) >= 100000 ? 0 : 1);
+const dtDate = (s) => { const [y, m, d] = String(s).slice(0, 10).split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); };
+const dtIso = (d) => d.toISOString().slice(0, 10);
+const dtDow = (d) => (d.getUTCDay() + 6) % 7;   // Senin = 0
+const dtTgl = (d, tahun) => `${d.getUTCDate()} ${DT_BLN[d.getUTCMonth()]}${tahun ? ' ' + d.getUTCFullYear() : ''}`;
+const dtBulanText = (ym) => `${DT_BLN_PANJANG[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
+const dtPosisi = () => {
+  const p = (DT.res && DT.res.posisi) || '';
+  return p ? dtTgl(dtDate(p), true) + (p.length > 10 ? ', ' + p.slice(11, 16) : '') : '';
+};
+
+function dtTmpText(k, label) {
+  if (!k) return 'Tanpa kriteria TMP';
+  const n = Number((String(label).match(/\d+/) || [k])[0]);
+  return /lebih/i.test(label) ? `TMP lebih dari ${n} hari` : `TMP ${n} hari`;
+}
+
+/** Tingkat warna: durasi dibanding batas TMP. 0..4 = hijau ke merah (4 = tepat di batas), 'x' = lewat batas. */
+function dtLevel(d, k) {
+  if (!k) return null;
+  const r = d / k;
+  return r > 1 ? 'x' : r < 0.125 ? 0 : r < 0.375 ? 1 : r < 0.625 ? 2 : r < 0.875 ? 3 : 4;
+}
+const dtLevelClass = (lv) => (lv === null ? 'dt-nk' : lv === 'x' ? 'dt-lx' : 'dt-l' + lv);
+
+/** Kolom durasi: 0 s.d. batas TMP selalu ada, lalu tiap durasi di atasnya; di atas 10 hari digabung. */
+function dtCols(rows, k) {
+  const CAP = 10;
+  const maxD = rows.reduce((m, r) => Math.max(m, r.durasi), 0);
+  const hi = Math.max(maxD, k && k <= CAP ? k + 1 : 0);
+  const cols = [];
+  for (let d = 0; d <= Math.min(hi, CAP); d++) cols.push({ from: d, to: d, label: String(d) });
+  if (hi > CAP) cols.push({ from: CAP + 1, to: Infinity, label: '≥' + (CAP + 1) });
+  return cols;
+}
+
+function ingestDt(res) {
+  if (!Array.isArray(res.rows) || !Array.isArray(res.fields)) throw new Error('Perbarui Apps Script (deploy versi baru) untuk menampilkan Daftar Tunggu.');
+  const f = Object.fromEntries(res.fields.map((k, i) => [k, i]));
+  DT.rows = res.rows.map((r) => ({
+    ulp: String(r[f.ulp]), jenis: r[f.jenis], selesai: !!r[f.selesai], durasi: Number(r[f.durasi]) || 0,
+    tmp: Number(r[f.tmp]) || 0, tmpLabel: String(r[f.tmpLabel] || ''), nyala: String(r[f.nyala] || ''), tambah: Number(r[f.tambahDaya]) || 0,
+  }));
+  const known = res.ulps || [];
+  DT.ulps = known.concat([...new Set(DT.rows.map((r) => r.ulp))].filter((u) => !known.includes(u)));
+  DT.res = res;
+  DT.error = '';
+  if (S.page === 'daftar-tunggu') renderDt();
+}
+
+function loadDt() {
+  if (DT.loading) return DT.loading;
+  if (!DT.res && typeof readCache === 'function') {
+    const c = readCache(DT_CACHE_KEY);
+    if (c && c.res && c.res.success && Array.isArray(c.res.rows)) {
+      try { ingestDt(c.res); } catch (e) { /* cache lama tidak terbaca */ }
+    }
+  }
+  DT.loading = dtFetch()
+    .then((res) => {
+      if (!res || !res.success) throw new Error((res && res.error) || 'Gagal mengambil data daftar tunggu');
+      ingestDt(res);
+      if (typeof writeCache === 'function') writeCache(res, DT_CACHE_KEY);
+    })
+    .catch((err) => {
+      const msg = String((err && err.message) || err);
+      if (DT.res) toast('warning', 'Daftar tunggu gagal diperbarui, menampilkan data tersimpan. ' + msg, 7000);
+      else DT.error = msg;
+    })
+    .finally(() => { DT.loading = null; if (S.page === 'daftar-tunggu') renderDt(); });
+  return DT.loading;
+}
+
+function dtShow() {
+  renderDt();
+  if (!DT.res && !DT.loading) loadDt();
+}
+
+/** Permohonan sesuai status (dan bulan nyala untuk yang sudah selesai). */
+function dtBase() {
+  return DT.rows.filter((r) => (DT.status === 'selesai' ? r.selesai && (!DT.bulan || r.nyala.slice(0, 7) === DT.bulan) : !r.selesai));
+}
+
+function dtControls(enabled) {
+  ['dt-status-tunggu', 'dt-status-selesai', 'dt-bulan', 'dt-tmp', 'dt-metric-pb', 'dt-metric-daya', 'dt-cal-ulp'].forEach((id) => { $(id).disabled = !enabled; });
+  $('dt-n-tunggu').textContent = enabled ? `(${dtFmt(DT.rows.filter((r) => !r.selesai).length)})` : '';
+  $('dt-n-selesai').textContent = enabled ? `(${dtFmt(DT.rows.filter((r) => r.selesai).length)})` : '';
+  $('dt-source').textContent = enabled ? `GV_67, tab ${DT.res.sheet || 'DAFTAR_TUNGGU'} · posisi ${dtPosisi()}` : '';
+  if (!enabled) return;
+  $('dt-status-' + DT.status).checked = true;
+
+  const months = [...new Set(DT.rows.filter((r) => r.selesai && r.nyala).map((r) => r.nyala.slice(0, 7)))].sort().reverse();
+  if (DT.bulan === null || (DT.bulan && !months.includes(DT.bulan))) DT.bulan = months[0] || '';
+  $('dt-bulan-field').hidden = DT.status !== 'selesai';
+  $('dt-bulan').innerHTML = '<option value="">Semua bulan</option>' + months.map((m) => `<option value="${m}">${dtBulanText(m)}</option>`).join('');
+  $('dt-bulan').value = DT.bulan;
+
+  const opts = {};
+  dtBase().forEach((r) => {
+    const key = String(r.tmp);
+    if (!opts[key]) opts[key] = { key, n: 0, text: dtTmpText(r.tmp, r.tmpLabel) };
+    opts[key].n++;
+  });
+  const list = Object.values(opts).sort((a, b) => b.n - a.n);
+  if (!opts[DT.tmp]) DT.tmp = list.length ? list[0].key : '';
+  $('dt-tmp').innerHTML = list.length
+    ? list.map((o) => `<option value="${o.key}">${esc(o.text)} (${dtFmt(o.n)})</option>`).join('')
+    : '<option value="">Tidak ada permohonan</option>';
+  $('dt-tmp').value = DT.tmp;
+  $('dt-tmp').disabled = list.length < 2;
+
+  $('dt-metric-' + DT.metric).checked = true;
+  $('dt-cal-ulp').innerHTML = '<option value="">Semua unit (UP3)</option>' + DT.ulps.map((u) => `<option value="${esc(u)}">${esc(dtNama(u))}</option>`).join('');
+  $('dt-cal-ulp').value = DT.ulp;
+}
+
+function renderDt() {
+  const st = $('dt-state');
+  const show = (html) => { st.innerHTML = html; st.hidden = false; $('dt-content').hidden = true; };
+  if (!DT.res) {
+    dtControls(false);
+    show(DT.error
+      ? `<div class="text-danger fw-bold mb-2"><i class="fas fa-triangle-exclamation me-2" aria-hidden="true"></i>Data daftar tunggu gagal dimuat</div>
+         <div class="text-muted small mb-3">${esc(DT.error)}</div>
+         <button type="button" class="btn btn-primary btn-sm rounded-12 px-4" data-dt-retry><i class="fas fa-rotate me-2" aria-hidden="true"></i>Coba lagi</button>`
+      : '<div class="spinner-border text-primary mb-3" role="status"><span class="visually-hidden">Memuat</span></div><div class="fw-600 text-muted">Memuat daftar tunggu dari tab DAFTAR_TUNGGU…</div>');
+    return;
+  }
+  if (!DT.rows.length) {
+    dtControls(false);
+    show(`<div class="fw-bold text-dark mb-1">Belum ada permohonan Pasang Baru atau Perubahan Daya</div>
+      <div class="text-muted small">${esc(DT.res.note || 'Tempel isi file GV_67 (termasuk baris judul kolom) di tab DAFTAR_TUNGGU mulai sel A1, lalu muat ulang halaman ini.')}</div>`);
+    return;
+  }
+  st.hidden = true;
+  $('dt-content').hidden = false;
+  dtControls(true);
+  dtRenderRekap();
+  dtRenderCal();
+}
+
+function dtRenderRekap() {
+  const k = Number(DT.tmp) || 0;
+  const label = (DT.rows.find((r) => String(r.tmp) === DT.tmp) || {}).tmpLabel || '';
+  const rows = dtBase().filter((r) => String(r.tmp) === DT.tmp);
+  const cols = dtCols(rows, k);
+  const colOf = (d) => cols.findIndex((c) => d >= c.from && d <= c.to);
+
+  // Hitung per [jenis|ulp], per jenis, dan total; simpan durasi terbesar per sel untuk kolom gabungan.
+  const cnt = {};
+  const add = (key, ci, d) => {
+    const c = cnt[key] || (cnt[key] = { n: cols.map(() => 0), max: cols.map(() => 0), sum: 0 });
+    c.n[ci]++; c.max[ci] = Math.max(c.max[ci], d); c.sum++;
+  };
+  rows.forEach((r) => {
+    const ci = colOf(r.durasi);
+    add(r.jenis + '|' + r.ulp, ci, r.durasi); add(r.jenis + '|*', ci, r.durasi); add('*', ci, r.durasi);
+  });
+  const get = (key) => cnt[key] || { n: cols.map(() => 0), max: cols.map(() => 0), sum: 0 };
+  const tmpText = dtTmpText(k, label);
+  const cells = (c, who) => cols.map((col, i) => {
+    const n = c.n[i];
+    if (!n) return '<td class="dt-0"><span aria-hidden="true">·</span><span class="visually-hidden">0</span></td>';
+    const d = col.to === Infinity ? c.max[i] : col.from;
+    const tip = `${who} · ${col.label} hari kerja: ${dtFmt(n)} pelanggan`;
+    return `<td class="dt-n ${dtLevelClass(dtLevel(d, k))}" title="${esc(tip)}">${dtFmt(n)}</td>`;
+  }).join('') + `<td class="dt-sum${c.sum ? '' : ' dt-0'}">${dtFmt(c.sum)}</td>`;
+
+  const nIn = cols.filter((c) => !k || c.from <= k).length;
+  const nOut = cols.length - nIn;
+  const head = `<thead>
+    <tr>
+      <th rowspan="2" scope="col" class="dt-unit">Unit</th>
+      ${nIn ? `<th colspan="${nIn}" scope="colgroup">${k ? `Dalam TMP (0 s.d. ${k} hari kerja)` : 'Durasi hari kerja'}</th>` : ''}
+      ${nOut ? `<th colspan="${nOut}" scope="colgroup" class="dt-band-out">Lewat TMP</th>` : ''}
+      <th rowspan="2" scope="col" class="dt-sum">Total</th>
+    </tr>
+    <tr>${cols.map((col) => `<th scope="col" class="${dtLevelClass(dtLevel(col.from, k))}"><span class="dt-d">${col.label}</span><span class="dt-h">hari</span><i class="dt-key" aria-hidden="true"></i></th>`).join('')}</tr>
+  </thead>`;
+  const groups = DT_JENIS.map((j) => {
+    const open = !DT.closed[j.key];
+    const g = get(j.key + '|*');
+    return `<tbody>
+      <tr class="dt-grp"><th scope="rowgroup"><button type="button" class="dt-toggle" data-dt-toggle="${j.key}" aria-expanded="${open}" title="${esc(j.note ? j.name + ': ' + j.note : j.name)}"><i class="fas fa-chevron-down" aria-hidden="true"></i>${esc(j.name)}</button></th>${cells(g, j.name)}</tr>
+      ${DT.ulps.map((u) => `<tr class="dt-ulp" data-jenis="${j.key}"${open ? '' : ' hidden'}><th scope="row"><span class="dt-code">${esc((DT.res.codes || {})[u] || '')}</span>${esc(dtNama(u))}</th>${cells(get(j.key + '|' + u), dtNama(u) + ' · ' + j.name)}</tr>`).join('')}
+    </tbody>`;
+  }).join('');
+  const all = get('*');
+  const foot = `<tfoot><tr><th scope="row">Total UP3</th>${cells(all, 'UP3 Tahuna')}</tr></tfoot>`;
+
+  // Ringkasan di atas tabel
+  const byJenis = (key) => rows.filter((r) => r.jenis === key).length;
+  const lewat = k ? rows.filter((r) => r.durasi > k).length : 0;
+  const pct = (n) => (rows.length ? ` (${dtFmt((n / rows.length) * 100, 1)}%)` : '');
+  const facts = DT_JENIS.map((j) => `<li><b>${dtFmt(byJenis(j.key))}</b>${esc(j.name)}</li>`);
+  if (k) facts.push(`<li class="${lewat ? 'warn' : ''}"><b>${dtFmt(lewat)}${lewat ? pct(lewat) : ''}</b>Lewat TMP</li>`);
+  if (k && DT.status === 'tunggu') {
+    const batas = rows.filter((r) => r.durasi === k).length;
+    facts.push(`<li class="${batas ? 'warn' : ''}"><b>${dtFmt(batas)}</b>Tepat di batas ${k} hari</li>`);
+  }
+  if (DT.status === 'selesai' && rows.length) facts.push(`<li><b>${dtFmt(rows.reduce((s, r) => s + r.durasi, 0) / rows.length, 1)} hari</b>Rata-rata durasi</li>`);
+
+  const sub = DT.status === 'tunggu'
+    ? `Sudah bayar, belum selesai, posisi ${dtPosisi()} · ${tmpText}`
+    : `Selesai (peremajaan) dengan nyala ${DT.bulan ? dtBulanText(DT.bulan) : 'semua bulan'} · ${tmpText}`;
+
+  // Legenda warna dari batas TMP terpilih
+  let legend = '';
+  if (k) {
+    const span = {};
+    for (let d = 0; d <= k; d++) { const lv = dtLevel(d, k); (span[lv] = span[lv] || []).push(d); }
+    legend = '<div class="dt-legend"><span>Warna menurut durasi hari kerja dibanding batas TMP:</span>' + Object.keys(span).map((lv) => {
+      const ds = span[lv];
+      const txt = (ds.length > 1 ? `${ds[0]}-${ds[ds.length - 1]}` : ds[0]) + ' hari' + (ds.includes(k) ? ' (batas)' : '');
+      return `<span><i class="${dtLevelClass(Number(lv))}" aria-hidden="true"></i>${txt}</span>`;
+    }).join('') + `<span><i class="dt-lx" aria-hidden="true"></i>${k + 1} hari ke atas (lewat TMP)</span></div>`;
+  }
+  const sk = DT.res.skipped || {};
+  const skip = [sk.batal ? `${dtFmt(sk.batal)} permohonan batal` : '', sk.belumBayar ? `${dtFmt(sk.belumBayar)} yang belum bayar` : '',
+    sk.jenisLain ? `${dtFmt(sk.jenisLain)} jenis transaksi lain` : ''].filter(Boolean);
+
+  $('dt-rekap').innerHTML = `
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+      <div>
+        <h6 class="dt-title">Rekap per ULP dan jenis transaksi</h6>
+        <div class="dt-sub">${esc(sub)}</div>
+      </div>
+      <span class="dt-total">${dtFmt(rows.length)} pelanggan</span>
+    </div>
+    ${rows.length ? `<ul class="dt-facts">${facts.join('')}</ul>` : `<p class="dt-note my-3">Tidak ada permohonan untuk pilihan ini.</p>`}
+    <div class="dt-hint">Geser tabel ke samping untuk melihat kolom hari berikutnya dan total.</div>
+    <div class="dt-wrap" tabindex="0" role="region" aria-label="Tabel rekap daftar tunggu, bisa digeser">
+      <table class="dt-table">
+        <caption class="visually-hidden">Jumlah pelanggan per unit dan jenis transaksi menurut durasi hari kerja, ${esc(tmpText)}</caption>
+        ${head}${groups}${foot}
+      </table>
+    </div>
+    ${legend}
+    <div class="dt-note">Migrasi: ${esc(DT_JENIS[2].note)}. Perubahan Daya di atas tidak termasuk migrasi.</div>
+    ${skip.length ? `<div class="dt-note">Tidak dihitung: ${esc(skip.join(', '))}.</div>` : ''}`;
+}
+
+function dtRenderCal() {
+  const pb = DT.metric === 'pb';
+  const nyala = DT.rows.filter((r) => r.nyala);
+  if (!nyala.length) {
+    $('dt-cal-sub').textContent = '';
+    $('dt-cal').innerHTML = '<div class="empty-state">Belum ada permohonan yang nyala di data GV_67 ini.</div>';
+    return;
+  }
+  const dates = nyala.map((r) => r.nyala).sort();
+  const pos = ((DT.res && DT.res.posisi) || '').slice(0, 10);
+  const start = dtDate(dates[0]);
+  const end = dtDate(pos > dates[dates.length - 1] ? pos : dates[dates.length - 1]);
+  const val = {};
+  nyala.filter((r) => (!DT.ulp || r.ulp === DT.ulp) && (pb ? r.jenis === 'PB' : r.jenis !== 'PB'))
+    .forEach((r) => { val[r.nyala] = (val[r.nyala] || 0) + (pb ? 1 : r.tambah); });
+  const vals = Object.values(val);
+  const maxAbs = Math.max(1, ...vals.map(Math.abs));
+  const show = (v) => (pb ? dtFmt(v) : (v > 0 ? '+' : '') + dtKva(v));
+  const unit = pb ? 'pelanggan' : 'kVA';
+  const total = vals.reduce((s, v) => s + v, 0);
+  const topDay = Object.keys(val).sort((a, b) => val[b] - val[a] || a.localeCompare(b))[0];
+  const unitName = DT.ulp ? dtNama(DT.ulp) : 'UP3 Tahuna';
+  $('dt-cal-sub').textContent = `${pb ? 'Pasang Baru' : 'Penambahan daya dari Perubahan Daya dan Migrasi (DAYA − DAYA_LAMA)'}, per tanggal nyala, ${unitName}, `
+    + `${dtTgl(start, true)} s.d. ${dtTgl(end, true)}: ${show(total)} ${unit}`
+    + (topDay && val[topDay] > 0 ? `. Tertinggi ${show(val[topDay])} ${unit} pada ${DT_HARI_PANJANG[dtDow(dtDate(topDay))]}, ${dtTgl(dtDate(topDay), true)}.` : '.');
+
+  const first = new Date(start); first.setUTCDate(first.getUTCDate() - dtDow(first));
+  const last = new Date(end); last.setUTCDate(last.getUTCDate() - dtDow(last));
+  let body = '';
+  for (const w = new Date(last); w >= first; w.setUTCDate(w.getUTCDate() - 7)) {
+    const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(w); d.setUTCDate(d.getUTCDate() + i); return d; });
+    const inside = (d) => d >= start && d <= end;
+    const sum = days.filter(inside).reduce((s, d) => s + (val[dtIso(d)] || 0), 0);
+    const a = days[0], b = days[6];
+    const range = a.getUTCMonth() === b.getUTCMonth() ? `${a.getUTCDate()}-${b.getUTCDate()} ${DT_BLN[b.getUTCMonth()]}` : `${dtTgl(a)} - ${dtTgl(b)}`;
+    body += `<tbody><tr class="dt-wk"><th colspan="7" scope="rowgroup"><div class="dt-wk-row"><span>${range}</span><b>${show(sum)} ${unit}</b></div></th></tr><tr>`
+      + days.map((d) => {
+        if (!inside(d)) return '<td></td>';
+        const v = val[dtIso(d)] || 0;
+        const what = pb ? `${dtFmt(v)} pasang baru` : v ? `${v > 0 ? 'tambah' : 'turun'} ${dtKva(Math.abs(v))} kVA` : 'tidak ada perubahan daya';
+        const lbl = `${DT_HARI_PANJANG[dtDow(d)]}, ${dtTgl(d, true)}: ${what}`;
+        const mark = v
+          ? `<span class="dt-bub${v < 0 ? ' neg' : ''}" style="--f:${Math.sqrt(Math.abs(v) / maxAbs).toFixed(3)}" aria-hidden="true">${pb ? dtFmt(v) : dtKva(v, true)}</span>`
+          : '<span class="dt-dot" aria-hidden="true"></span>';
+        return `<td title="${esc(lbl)}"><div class="dt-day">${mark}<span class="dt-dn" aria-hidden="true">${d.getUTCDate()}</span><span class="visually-hidden">${esc(lbl)}</span></div></td>`;
+      }).join('') + '</tr></tbody>';
+  }
+  $('dt-cal').innerHTML = `<table class="dt-cal">
+    <caption class="visually-hidden">${esc($('dt-cal-sub').textContent)}</caption>
+    <thead><tr>${DT_HARI.map((h, i) => `<th scope="col"><abbr title="${DT_HARI_PANJANG[i]}">${h}</abbr></th>`).join('')}</tr></thead>
+    ${body}</table>`;
+}
+
+function dtInit() {
+  document.querySelectorAll('input[name="dt-status"]').forEach((el) => el.addEventListener('change', () => { DT.status = el.value; renderDt(); }));
+  $('dt-bulan').addEventListener('change', (e) => { DT.bulan = e.target.value; renderDt(); });
+  $('dt-tmp').addEventListener('change', (e) => { DT.tmp = e.target.value; renderDt(); });
+  document.querySelectorAll('input[name="dt-metric"]').forEach((el) => el.addEventListener('change', () => { DT.metric = el.value; dtRenderCal(); }));
+  $('dt-cal-ulp').addEventListener('change', (e) => { DT.ulp = e.target.value; dtRenderCal(); });
+  $('page-daftar-tunggu').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-dt-toggle], [data-dt-retry]');
+    if (!t) return;
+    if (t.hasAttribute('data-dt-retry')) { DT.error = ''; renderDt(); loadDt(); return; }
+    const j = t.dataset.dtToggle;
+    DT.closed[j] = !DT.closed[j];
+    t.setAttribute('aria-expanded', String(!DT.closed[j]));
+    document.querySelectorAll(`#dt-rekap tr[data-jenis="${j}"]`).forEach((tr) => { tr.hidden = !!DT.closed[j]; });
+  });
+  const refresh = $('btn-refresh');
+  if (refresh) refresh.addEventListener('click', () => { if (DT.res || S.page === 'daftar-tunggu') loadDt(); });
+}
+/* ═══════════════════ /DAFTAR TUNGGU ═══════════════════ */
+
+/* ═══════════════════ INIT ═══════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  $('btn-sidebar').addEventListener('click', toggleSidebar);
+  $('backdrop').addEventListener('click', () => document.body.classList.remove('sidebar-open'));
+  $('sidebar').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-group], [data-page], [data-action]');
+    if (!t) return;
+    if (t.tagName === 'A') e.preventDefault();
+    if (t.dataset.group) t.parentElement.classList.toggle('open');
+    else if (t.dataset.action === 'nps-retry') loadNps();
+    else showPage(t.dataset.page, t.dataset.sheet != null ? Number(t.dataset.sheet) : undefined);
+  });
+
+  $('nps-bulan').addEventListener('change', () => { const s = npsSel(); s.month = Number($('nps-bulan').value); s.auto = false; renderNps(); });
+  $('nps-unit').addEventListener('change', () => { npsSel().unit = $('nps-unit').value; renderNps(); });
+  const goSection = (e) => {
+    const c = e.target.closest('[data-sec]');
+    if (!c || (e.type === 'keydown' && e.key !== 'Enter')) return;
+    const el = $('nps-sec-' + c.dataset.sec);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  $('nps-kpis').addEventListener('click', goSection);
+  $('nps-kpis').addEventListener('keydown', goSection);
+
+  $('f-ulp').addEventListener('change', refreshPenyulang);
+  $('btn-apply').addEventListener('click', () => applyFilter(true));
+  $('btn-reset').addEventListener('click', resetFilter);
+  ['f-segmentasi', 'f-penyulang'].forEach((id) => $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') applyFilter(true); }));
+  $('search-prioritas').addEventListener('input', searchPrioritas);
+  $('f-sorek-bulan').addEventListener('change', (e) => { e.target.dataset.dipilih = '1'; renderSorek(); });
+  document.querySelectorAll('input[name="sorek-scope"]').forEach((el) => el.addEventListener('change', renderSorek));
+
+  window.addEventListener('online', updateNetStatus);
+  window.addEventListener('offline', updateNetStatus);
+  updateNetStatus();
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  dtInit();
+  showPage('prioritas');
+  loadNps();   // isi sub-menu NPS di latar belakang
+});
+</script>
+</body>
+</html>
